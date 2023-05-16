@@ -1,8 +1,8 @@
 package com.example.demo.entities.enums;
 
 public enum Role {
-    USER(1),
-    ADMIN(2);
+    ROLE_USER(1),
+    ROLE_ADMIN(2);
 
     private int code;
 
