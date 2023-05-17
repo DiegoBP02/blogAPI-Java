@@ -10,18 +10,27 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity(name = "users")
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = {"email", "username"})})
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
-    private String username;
     private String email;
+    @Column
+    private String username;
     private String password;
     private Role role;
 
-    public User() {}
+    public User() {
+    }
+
+    public User(String username, String email, String password, Role role) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
 
     public Long getId() {
         return id;

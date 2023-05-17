@@ -1,12 +1,15 @@
 package com.example.demo.controllers;
 
-import com.example.demo.dto.Login;
-import com.example.demo.entities.User;
+import com.example.demo.dtos.LoginDTO;
+import com.example.demo.dtos.RegisterDTO;
+import com.example.demo.repositories.UserRepository;
+import com.example.demo.services.AuthenticationService;
 import com.example.demo.services.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,21 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     @Autowired
-    private AuthenticationManager authenticationManager;
+    private AuthenticationService authenticationService;
 
-    @Autowired
-    private TokenService tokenService;
+    @PostMapping("/register")
+    public ResponseEntity<String> register(@RequestBody RegisterDTO register) {
+        return ResponseEntity.ok().body(authenticationService.register(register));
+    }
 
     @PostMapping("/login")
-    public String login(@RequestBody Login login){
-            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                    new UsernamePasswordAuthenticationToken(login.username(), login.password());
-
-            Authentication authenticate = this.authenticationManager.authenticate(usernamePasswordAuthenticationToken);
-
-            var user = (User) authenticate.getPrincipal();
-
-            return tokenService.generateToken(user);
-        }
-
+    public ResponseEntity<String> login(@RequestBody LoginDTO login) {
+        return ResponseEntity.ok().body(authenticationService.login(login));
+    }
 }

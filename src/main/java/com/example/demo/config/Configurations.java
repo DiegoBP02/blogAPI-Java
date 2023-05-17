@@ -28,7 +28,7 @@ public class Configurations {
         return http.csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().authorizeHttpRequests()
-                .requestMatchers(HttpMethod.POST, "/login")
+                .requestMatchers(HttpMethod.POST, "/login", "/register")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/home")
                 .permitAll()
