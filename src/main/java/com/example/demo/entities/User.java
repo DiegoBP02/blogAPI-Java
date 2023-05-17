@@ -1,13 +1,13 @@
 package com.example.demo.entities;
 
 import com.example.demo.entities.enums.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Entity(name = "users")
 @Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = {"email", "username"})})
@@ -17,10 +17,13 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private String email;
-    @Column
     private String username;
     private String password;
     private Role role;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "author")
+    private Set<Post> posts = new HashSet<>();
 
     public User() {
     }
