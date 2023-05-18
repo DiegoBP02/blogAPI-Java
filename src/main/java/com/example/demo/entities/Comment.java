@@ -26,8 +26,7 @@ public class Comment {
 
     public Comment(){}
 
-    public Comment(Long id, String content, LocalDateTime publishDate, int upvotes, Post post, User author) {
-        this.id = id;
+    public Comment(String content, LocalDateTime publishDate, int upvotes, Post post, User author) {
         this.content = content;
         this.publishDate = publishDate;
         this.upvotes = upvotes;

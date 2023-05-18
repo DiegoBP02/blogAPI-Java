@@ -1,6 +1,7 @@
 package com.example.demo.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -14,25 +15,27 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     private String title;
+    private String content;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "GMT")
     private Instant publishDate;
     private int upvotes;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User author;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "post")
     private Set<Comment> comments = new HashSet<>();
 
     public Post() {
     }
 
-    public Post(Long id, String title, Instant publishDate, int upvotes, User author) {
-        this.id = id;
+    public Post(String title, String content, Instant publishDate, User author) {
         this.title = title;
+        this.content = content;
         this.publishDate = publishDate;
-        this.upvotes = upvotes;
         this.author = author;
     }
 
