@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity(name = "comments")
 public class Comment {
@@ -16,6 +18,8 @@ public class Comment {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "GMT")
     private Instant publishDate;
     private int upvotes;
+
+    private Set<Long> usersUpvotesId = new HashSet<>();
 
     @JsonIgnore
     @ManyToOne
@@ -82,5 +86,14 @@ public class Comment {
 
     public void setAuthor(User author) {
         this.author = author;
+    }
+
+    public Set<Long> getUsersUpvotesId() {
+        return usersUpvotesId;
+    }
+
+    public void increaseUpvote(Long id){
+        this.usersUpvotesId.add(id);
+        this.upvotes++;
     }
 }

@@ -70,4 +70,14 @@ public class CommentService {
             throw new DatabaseException(e.getMessage());
         }
     }
+
+    public String increaseUpvote(Long id, Long userId) {
+        Comment comment = this.findById(id);
+        if(comment.getUsersUpvotesId().contains(userId)){
+            return "User already upvoted!";
+        }
+        comment.increaseUpvote(userId);
+        commentRepository.save(comment);
+        return "Successful!";
+    }
 }
