@@ -20,6 +20,8 @@ public class Post {
     private Instant publishDate;
     private int upvotes;
 
+    private Set<Long> usersUpvotesId = new HashSet<>();
+
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -89,5 +91,14 @@ public class Post {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public Set<Long> getUsersUpvotesId() {
+        return usersUpvotesId;
+    }
+
+    public void increaseUpvote(Long id){
+        this.usersUpvotesId.add(id);
+        this.upvotes++;
     }
 }

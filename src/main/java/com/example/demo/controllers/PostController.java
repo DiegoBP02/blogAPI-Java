@@ -7,6 +7,7 @@ import com.example.demo.entities.User;
 import com.example.demo.services.PostService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -51,5 +52,13 @@ public class PostController {
     public ResponseEntity<Post> delete(@PathVariable Long id){
         postService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/{id}/upvote")
+    public ResponseEntity<String> increaseUpvote(@PathVariable Long id, HttpServletRequest request){
+        User user = (User) request.getAttribute("user");
+        String result = postService.increaseUpvote(id, user.getId());
+        HttpStatus status = result.equals("Successful!") ? HttpStatus.OK : HttpStatus.CONFLICT;
+        return ResponseEntity.status(status).body(result);
     }
 }

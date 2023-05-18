@@ -59,4 +59,14 @@ public class PostService {
             throw new DatabaseException(e.getMessage());
         }
     }
+
+    public String increaseUpvote(Long id, Long userId) {
+        Post post = this.findById(id);
+        if(post.getUsersUpvotesId().contains(userId)){
+            return "User already upvoted!";
+        }
+        post.increaseUpvote(userId);
+        postRepository.save(post);
+        return "Successful!";
+    }
 }
