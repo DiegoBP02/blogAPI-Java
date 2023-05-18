@@ -38,4 +38,13 @@ public class CommentService {
         }
     }
 
+    public List<Comment> findAll() {
+        return commentRepository.findAll();
+    }
+
+    public Comment findById(Long id) {
+        Optional<Comment> post = commentRepository.findById(id);
+        return post.orElseThrow(() -> new ResourceNotFoundException(id));
+    }
+
 }

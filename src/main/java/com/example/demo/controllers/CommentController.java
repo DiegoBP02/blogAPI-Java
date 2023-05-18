@@ -35,4 +35,14 @@ public class CommentController {
         return ResponseEntity.created(uri).body(commentService.create(comment, user));
     }
 
+    @RequestMapping(method = RequestMethod.GET)
+    public ResponseEntity<List<Comment>> findAll(){
+        return ResponseEntity.ok().body(commentService.findAll());
+    }
+
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<Comment> findById(@PathVariable Long id){
+        return ResponseEntity.ok().body(commentService.findById(id));
+    }
+
 }
