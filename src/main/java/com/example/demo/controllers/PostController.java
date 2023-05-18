@@ -8,13 +8,11 @@ import com.example.demo.services.PostService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/posts")
@@ -34,4 +32,13 @@ public class PostController {
         return ResponseEntity.created(uri).body(postService.create(post, user));
     }
 
+    @GetMapping
+    public ResponseEntity<List<Post>> findAll(){
+        return ResponseEntity.ok().body(postService.findAll());
+    }
+
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<Post> findById(@PathVariable Long id){
+        return ResponseEntity.ok().body(postService.findById(id));
+    }
 }
