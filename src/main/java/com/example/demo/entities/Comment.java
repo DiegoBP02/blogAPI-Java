@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity(name = "comments")
@@ -13,23 +14,24 @@ public class Comment {
     private Long id;
     private String content;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "GMT")
-    private LocalDateTime publishDate;
+    private Instant publishDate;
     private int upvotes;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "post_id")
     private Post post;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User author;
 
     public Comment(){}
 
-    public Comment(String content, LocalDateTime publishDate, int upvotes, Post post, User author) {
+    public Comment(String content, Instant publishDate, Post post, User author) {
         this.content = content;
         this.publishDate = publishDate;
-        this.upvotes = upvotes;
         this.post = post;
         this.author = author;
     }
@@ -50,11 +52,11 @@ public class Comment {
         this.content = content;
     }
 
-    public LocalDateTime getPublishDate() {
+    public Instant getPublishDate() {
         return publishDate;
     }
 
-    public void setPublishDate(LocalDateTime publishDate) {
+    public void setPublishDate(Instant publishDate) {
         this.publishDate = publishDate;
     }
 
