@@ -47,4 +47,27 @@ public class CommentService {
         return post.orElseThrow(() -> new ResourceNotFoundException(id));
     }
 
+    public Comment update(Long id, Comment obj) {
+        try{
+            Comment entity = commentRepository.getReferenceById(id);
+            updateData(entity, obj);
+            return commentRepository.save(entity);
+        } catch(EntityNotFoundException e){
+            throw new ResourceNotFoundException(id);
+        }
+    }
+
+    private void updateData(Comment entity, Comment obj) {
+        entity.setContent(obj.getContent());
+    }
+
+    public void delete(Long id) {
+        try {
+            commentRepository.deleteById(id);
+        } catch(EmptyResultDataAccessException e){
+            throw new ResourceNotFoundException(id);
+        } catch(DataIntegrityViolationException e){
+            throw new DatabaseException(e.getMessage());
+        }
+    }
 }
