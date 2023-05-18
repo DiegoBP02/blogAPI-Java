@@ -4,8 +4,12 @@ import com.example.demo.dtos.PostDTO;
 import com.example.demo.entities.Post;
 import com.example.demo.entities.User;
 import com.example.demo.repositories.PostRepository;
+import com.example.demo.services.exceptions.DatabaseException;
 import com.example.demo.services.exceptions.ResourceNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -29,5 +33,30 @@ public class PostService {
     public Post findById(Long id) {
         Optional<Post> post = postRepository.findById(id);
         return post.orElseThrow(() -> new ResourceNotFoundException(id));
+    }
+
+    public Post update(Long id, Post obj) {
+        try{
+            Post entity = postRepository.getReferenceById(id);
+            updateData(entity, obj);
+            return postRepository.save(entity);
+        } catch(EntityNotFoundException e){
+            throw new ResourceNotFoundException(id);
+        }
+    }
+
+    private void updateData(Post entity, Post obj) {
+        entity.setTitle(obj.getTitle());
+        entity.setContent(obj.getContent());
+    }
+
+    public void delete(Long id) {
+        try {
+            postRepository.deleteById(id);
+        } catch(EmptyResultDataAccessException e){
+            throw new ResourceNotFoundException(id);
+        } catch(DataIntegrityViolationException e){
+            throw new DatabaseException(e.getMessage());
+        }
     }
 }
