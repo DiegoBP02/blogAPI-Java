@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
+import java.time.Instant;
 
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
@@ -21,6 +22,11 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          org.springframework.security.core.AuthenticationException authException) throws IOException, ServletException {
         try {
+            Object expired = request.getAttribute("tokenExpired");
+            if(expired != null ){
+                handlerExceptionResolver.resolveException(request, response, null, new TokenExpiredException(expired.toString(), Instant.now()));
+                return;
+            }
             handlerExceptionResolver.resolveException(request, response, null, authException);
         } catch (RuntimeException e) {
             throw e;
