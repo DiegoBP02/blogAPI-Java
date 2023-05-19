@@ -24,7 +24,7 @@ public class PostService {
     private PostRepository postRepository;
 
     public Post create(PostDTO post, User user) {
-        return postRepository.save(new Post(post.getTitle(), post.getContent(), Instant.now(), user));
+        return postRepository.save(new Post(post.getTitle(), post.getContent(), Instant.now(), post.getCategories(),user));
     }
 
     public List<Post> findAll() {
