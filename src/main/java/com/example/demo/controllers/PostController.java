@@ -6,6 +6,7 @@ import com.example.demo.entities.Post;
 import com.example.demo.entities.User;
 import com.example.demo.services.PostService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class PostController {
     private PostService postService;
 
     @PostMapping
-    public ResponseEntity<Post> createPost(@RequestBody PostDTO post, HttpServletRequest request) {
+    public ResponseEntity<Post> createPost(@Valid @RequestBody PostDTO post, HttpServletRequest request) {
         User user = (User) request.getAttribute("user");
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
