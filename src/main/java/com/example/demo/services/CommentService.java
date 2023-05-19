@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class CommentService {
@@ -42,12 +43,12 @@ public class CommentService {
         return commentRepository.findAll();
     }
 
-    public Comment findById(Long id) {
+    public Comment findById(UUID id) {
         Optional<Comment> post = commentRepository.findById(id);
         return post.orElseThrow(() -> new ResourceNotFoundException(id));
     }
 
-    public Comment update(Long id, Comment obj) {
+    public Comment update(UUID id, Comment obj) {
         try{
             Comment entity = commentRepository.getReferenceById(id);
             updateData(entity, obj);
@@ -61,7 +62,7 @@ public class CommentService {
         entity.setContent(obj.getContent());
     }
 
-    public void delete(Long id) {
+    public void delete(UUID id) {
         try {
             commentRepository.deleteById(id);
         } catch(EmptyResultDataAccessException e){
@@ -71,7 +72,7 @@ public class CommentService {
         }
     }
 
-    public String increaseUpvote(Long id, Long userId) {
+    public String increaseUpvote(UUID id, UUID userId) {
         Comment comment = this.findById(id);
         if(comment.getUsersUpvotesId().contains(userId)){
             return "User already upvoted!";

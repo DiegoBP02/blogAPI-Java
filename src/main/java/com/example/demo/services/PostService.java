@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PostService {
@@ -30,12 +31,12 @@ public class PostService {
         return postRepository.findAll();
     }
 
-    public Post findById(Long id) {
+    public Post findById(UUID id) {
         Optional<Post> post = postRepository.findById(id);
         return post.orElseThrow(() -> new ResourceNotFoundException(id));
     }
 
-    public Post update(Long id, Post obj) {
+    public Post update(UUID id, Post obj) {
         try{
             Post entity = postRepository.getReferenceById(id);
             updateData(entity, obj);
@@ -50,7 +51,7 @@ public class PostService {
         entity.setContent(obj.getContent());
     }
 
-    public void delete(Long id) {
+    public void delete(UUID id) {
         try {
             postRepository.deleteById(id);
         } catch(EmptyResultDataAccessException e){
@@ -60,7 +61,7 @@ public class PostService {
         }
     }
 
-    public String increaseUpvote(Long id, Long userId) {
+    public String increaseUpvote(UUID id, UUID userId) {
         Post post = this.findById(id);
         if(post.getUsersUpvotesId().contains(userId)){
             return "User already upvoted!";

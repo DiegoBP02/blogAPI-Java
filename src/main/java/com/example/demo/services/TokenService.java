@@ -14,7 +14,7 @@ public class TokenService {
     public String generateToken(User user) {
         return JWT.create()
                 .withSubject(user.getUsername())
-                .withClaim("id", user.getId())
+                .withClaim("id", user.getId().toString())
                 .withExpiresAt(LocalDateTime.now()
                         .plusDays(1)
                         .toInstant(ZoneOffset.of("-03:00"))

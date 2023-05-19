@@ -7,20 +7,22 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity(name = "posts")
 public class Post {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     private String title;
     private String content;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "GMT")
     private Instant publishDate;
     private int upvotes;
 
-    private Set<Long> usersUpvotesId = new HashSet<>();
+    @JsonIgnore
+    private Set<UUID> usersUpvotesId = new HashSet<>();
 
     @JsonIgnore
     @ManyToOne
@@ -45,11 +47,11 @@ public class Post {
         return comments;
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -93,11 +95,11 @@ public class Post {
         this.content = content;
     }
 
-    public Set<Long> getUsersUpvotesId() {
+    public Set<UUID> getUsersUpvotesId() {
         return usersUpvotesId;
     }
 
-    public void increaseUpvote(Long id){
+    public void increaseUpvote(UUID id){
         this.usersUpvotesId.add(id);
         this.upvotes++;
     }

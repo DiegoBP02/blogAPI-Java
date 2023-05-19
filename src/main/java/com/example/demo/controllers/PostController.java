@@ -14,6 +14,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/posts")
@@ -39,23 +40,23 @@ public class PostController {
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<Post> findById(@PathVariable Long id){
+    public ResponseEntity<Post> findById(@PathVariable UUID id){
         return ResponseEntity.ok().body(postService.findById(id));
     }
 
     @PatchMapping(value = "/{id}")
-    public ResponseEntity<Post> update(@PathVariable Long id, @RequestBody Post obj){
+    public ResponseEntity<Post> update(@PathVariable UUID id, @RequestBody Post obj){
         return ResponseEntity.ok().body(postService.update(id, obj));
     }
 
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity<Post> delete(@PathVariable Long id){
+    public ResponseEntity<Post> delete(@PathVariable UUID id){
         postService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/{id}/upvote")
-    public ResponseEntity<String> increaseUpvote(@PathVariable Long id, HttpServletRequest request){
+    public ResponseEntity<String> increaseUpvote(@PathVariable UUID id, HttpServletRequest request){
         User user = (User) request.getAttribute("user");
         String result = postService.increaseUpvote(id, user.getId());
         HttpStatus status = result.equals("Successful!") ? HttpStatus.OK : HttpStatus.CONFLICT;
