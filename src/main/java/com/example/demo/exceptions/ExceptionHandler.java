@@ -6,9 +6,8 @@ import com.example.demo.services.exceptions.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
-import org.springframework.validation.ObjectError;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
@@ -54,6 +53,14 @@ public class ExceptionHandler {
         }
 
         StandardError err = new StandardError(Instant.now(), status.value(), error, errors.toString(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<StandardError> authError(AuthenticationException e, HttpServletRequest request) {
+        String error = "Authentication error";
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
         return ResponseEntity.status(status).body(err);
     }
 }
