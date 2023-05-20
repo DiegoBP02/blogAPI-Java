@@ -50,8 +50,8 @@ public class FilterToken extends OncePerRequestFilter {
             } catch (TokenExpiredException e) {
                 request.setAttribute("tokenExpired", e.getMessage());
             }
-
-            filterChain.doFilter(request, response);
         }
+
+        filterChain.doFilter(request, response);
     }
 }
