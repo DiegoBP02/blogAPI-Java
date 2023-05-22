@@ -1,11 +1,8 @@
 package com.example.demo.controllers;
 
 import com.example.demo.dtos.PostDTO;
-import com.example.demo.dtos.RegisterDTO;
 import com.example.demo.entities.Post;
-import com.example.demo.entities.User;
 import com.example.demo.services.PostService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,14 +22,14 @@ public class PostController {
     private PostService postService;
 
     @PostMapping
-    public ResponseEntity<Post> createPost(@Valid @RequestBody PostDTO post, HttpServletRequest request) {
-        User user = (User) request.getAttribute("user");
+    public ResponseEntity<Post> createPost(@Valid @RequestBody PostDTO post) {
+        Post result = postService.create(post);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(user.getId()).toUri();
+                .buildAndExpand(result.getId()).toUri();
 
-        return ResponseEntity.created(uri).body(postService.create(post, user));
+        return ResponseEntity.created(uri).body(result);
     }
 
     @GetMapping
@@ -57,9 +54,8 @@ public class PostController {
     }
 
     @PostMapping(value = "/{id}/upvote")
-    public ResponseEntity<String> increaseUpvote(@PathVariable UUID id, HttpServletRequest request){
-        User user = (User) request.getAttribute("user");
-        String result = postService.increaseUpvote(id, user.getId());
+    public ResponseEntity<String> increaseUpvote(@PathVariable UUID id){
+        String result = postService.increaseUpvote(id);
         HttpStatus status = result.equals("Successful!") ? HttpStatus.OK : HttpStatus.CONFLICT;
         return ResponseEntity.status(status).body(result);
     }

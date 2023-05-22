@@ -42,8 +42,6 @@ public class FilterToken extends OncePerRequestFilter {
                         null, user.getAuthorities());
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                request.setAttribute("user", user);
             } catch (TokenExpiredException e) {
                 request.setAttribute("tokenExpired", e.getMessage());
             }
