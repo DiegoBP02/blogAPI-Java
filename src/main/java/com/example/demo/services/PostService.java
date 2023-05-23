@@ -11,6 +11,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +30,7 @@ public class PostService {
 
     public Post create(PostDTO post) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return postRepository.save(new Post(post.getTitle(), post.getContent(), Instant.now(), post.getCategories(),user));
+        return postRepository.save(new Post(post.getTitle(), post.getContent(), Instant.now(), post.getCategories(), user));
     }
 
     public List<Post> findAll() {
@@ -42,14 +43,14 @@ public class PostService {
     }
 
     public Post update(UUID id, Post obj) {
-        try{
+        try {
             Post entity = postRepository.getReferenceById(id);
             User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             checkOwnership(user, entity.getAuthor().getId());
             updateData(entity, obj);
 
             return postRepository.save(entity);
-        } catch(EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             throw new ResourceNotFoundException(id);
         }
     }
@@ -66,14 +67,14 @@ public class PostService {
             User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             String role = user.getAuthorities().stream().toList().get(0).getAuthority();
 
-            if(!role.equals(Role.ROLE_ADMIN.toString())) {
+            if (!role.equals(Role.ROLE_ADMIN.toString())) {
                 checkOwnership(user, entity.getAuthor().getId());
             }
 
             postRepository.deleteById(id);
-        } catch(EmptyResultDataAccessException e){
+        } catch (EmptyResultDataAccessException e) {
             throw new ResourceNotFoundException(id);
-        } catch(DataIntegrityViolationException e){
+        } catch (DataIntegrityViolationException e) {
             throw new DatabaseException(e.getMessage());
         }
     }
@@ -82,7 +83,7 @@ public class PostService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         UUID userId = user.getId();
         Post post = this.findById(id);
-        if(post.getUsersUpvotesId().contains(userId)){
+        if (post.getUsersUpvotesId().contains(userId)) {
             return "User already upvoted! You can only upvote once!";
         }
         post.increaseUpvote(userId);
