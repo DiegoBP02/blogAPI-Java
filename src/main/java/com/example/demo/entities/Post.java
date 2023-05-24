@@ -38,7 +38,7 @@ public class Post {
     public Post() {
     }
 
-    public Post(String title, String content, Instant publishDate, Set<PostCategory> categories,User author) {
+    public Post(String title, String content, Instant publishDate, Set<PostCategory> categories, User author) {
         this.title = title;
         this.content = content;
         this.publishDate = publishDate;
@@ -102,7 +102,7 @@ public class Post {
         return usersUpvotesId;
     }
 
-    public void increaseUpvote(UUID id){
+    public void increaseUpvote(UUID id) {
         this.usersUpvotesId.add(id);
         this.upvotes++;
     }
