@@ -272,6 +272,7 @@ class PostServiceTest extends ApplicationConfigTest {
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
         verify(postRepository, times(1)).findById(ArgumentMatchers.any(UUID.class));
+        verify(postRepository, times(1)).save(ArgumentMatchers.any(Post.class));
     }
 
     @Test
@@ -298,6 +299,7 @@ class PostServiceTest extends ApplicationConfigTest {
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
         verify(postRepository, times(1)).findById(ArgumentMatchers.any(UUID.class));
+        verify(postRepository, never()).save(ArgumentMatchers.any(Post.class));
     }
 
 }

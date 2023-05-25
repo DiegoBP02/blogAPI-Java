@@ -48,7 +48,6 @@ public class ExceptionHandler {
     public ResponseEntity<StandardError> invalidArguments(MethodArgumentNotValidException e, HttpServletRequest request) {
         String error = "Invalid arguments";
         HttpStatus status = HttpStatus.BAD_REQUEST;
-
         final List<String> errors = new ArrayList<>();
         for (final FieldError err : e.getBindingResult().getFieldErrors()) {
             errors.add(err.getField() + ": " + err.getDefaultMessage());
