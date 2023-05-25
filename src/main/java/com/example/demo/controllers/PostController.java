@@ -55,8 +55,9 @@ public class PostController {
 
     @PostMapping(value = "/{id}/upvote")
     public ResponseEntity<String> increaseUpvote(@PathVariable UUID id){
-        String result = postService.increaseUpvote(id);
-        HttpStatus status = result.equals("Successful!") ? HttpStatus.OK : HttpStatus.CONFLICT;
-        return ResponseEntity.status(status).body(result);
+        boolean result = postService.increaseUpvote(id);
+        HttpStatus status = result ? HttpStatus.OK : HttpStatus.CONFLICT;
+        String message = result ? "Successful!" : "User already upvoted! You can only upvote once!";
+        return ResponseEntity.status(status).body(message);
     }
 }

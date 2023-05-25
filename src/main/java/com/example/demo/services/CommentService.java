@@ -89,15 +89,15 @@ public class CommentService {
         }
     }
 
-    public String increaseUpvote(UUID id) {
+    public boolean increaseUpvote(UUID id) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         UUID userId = user.getId();
         Comment comment = this.findById(id);
         if(comment.getUsersUpvotesId().contains(userId)){
-            return "User already upvoted! You can only upvote once!";
+            return false;
         }
         comment.increaseUpvote(userId);
         commentRepository.save(comment);
-        return "Successful!";
+        return true;
     }
 }

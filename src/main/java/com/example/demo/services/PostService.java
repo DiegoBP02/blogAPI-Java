@@ -80,15 +80,15 @@ public class PostService {
         }
     }
 
-    public String increaseUpvote(UUID id) {
+    public boolean increaseUpvote(UUID id) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         UUID userId = user.getId();
         Post post = this.findById(id);
         if (post.getUsersUpvotesId().contains(userId)) {
-            return "User already upvoted! You can only upvote once!";
+            return false;
         }
         post.increaseUpvote(userId);
         postRepository.save(post);
-        return "Successful!";
+        return true;
     }
 }

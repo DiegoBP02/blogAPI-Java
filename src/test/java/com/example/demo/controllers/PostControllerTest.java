@@ -191,6 +191,20 @@ class PostControllerTest extends ApplicationConfigTest {
 
     @Test
     @WithMockUser
+    @DisplayName("should delete a post")
+    void delete() throws Exception {
+        doNothing().when(postService).delete(ArgumentMatchers.any(UUID.class));
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete(PATH + "/" + UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(postService, times(1)).delete(any(UUID.class));
+    }
+
+    @Test
+    @WithMockUser
     @DisplayName("should throw UnauthorizedAccessException for invalid checkOwnership")
     void deleteUnauthorizedAccessException() throws Exception {
         doThrow(new UnauthorizedAccessException("You are not authorized to update this object. It does not belong to you"))
@@ -211,26 +225,12 @@ class PostControllerTest extends ApplicationConfigTest {
 
     @Test
     @WithMockUser
-    @DisplayName("should delete a post")
-    void delete() throws Exception {
-        doNothing().when(postService).delete(ArgumentMatchers.any(UUID.class));
-
-        mockMvc.perform(MockMvcRequestBuilders
-                .delete(PATH + "/" + UUID.randomUUID().toString())
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-
-        verify(postService, times(1)).delete(any(UUID.class));
-    }
-
-    @Test
-    @WithMockUser
     @DisplayName("should increase the upvote")
     void increaseUpvote() throws Exception {
         Post post = new Post("title", "contentmusthaveatleast30characters", Instant.now(), CATEGORIES_RECORD, USER_RECORD);
         when(postService.increaseUpvote(any(UUID.class))).thenAnswer(invocation -> {
             post.increaseUpvote(UUID.randomUUID());
-            return "Successful!";
+            return true;
         });
 
         MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
@@ -244,9 +244,30 @@ class PostControllerTest extends ApplicationConfigTest {
                 .andExpect(content().string("Successful!"))
         ;
 
-
         assertThat(post.getUpvotes()).isEqualTo(1);
         assertThat(post.getUsersUpvotesId()).size().isEqualTo(1);
+
+        verify(postService, times(1)).increaseUpvote(any(UUID.class));
+    }
+    @Test
+    @WithMockUser
+    @DisplayName("should return conflict if user already upvoted")
+    void increaseUpvoteConflict() throws Exception {
+        Post post = new Post("title", "contentmusthaveatleast30characters", Instant.now(), CATEGORIES_RECORD, USER_RECORD);
+        when(postService.increaseUpvote(any(UUID.class))).thenAnswer(invocation -> {
+            return false;
+        });
+
+        MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
+                .post(PATH + "/" + UUID.randomUUID().toString() + "/upvote")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        mockMvc.perform(mockRequest)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$", notNullValue()))
+                .andExpect(content().string("User already upvoted! You can only upvote once!"))
+        ;
 
         verify(postService, times(1)).increaseUpvote(any(UUID.class));
     }

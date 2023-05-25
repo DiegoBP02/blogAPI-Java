@@ -265,9 +265,9 @@ class PostServiceTest extends ApplicationConfigTest {
 
         when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(post));
 
-        String result = postService.increaseUpvote(UUID.randomUUID());
+        boolean result = postService.increaseUpvote(UUID.randomUUID());
 
-        assertThat(result).isEqualTo("Successful!");
+        assertThat(result).isTrue();
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
@@ -292,9 +292,9 @@ class PostServiceTest extends ApplicationConfigTest {
 
         when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(post));
 
-        String result = postService.increaseUpvote(UUID.randomUUID());
+        boolean result = postService.increaseUpvote(UUID.randomUUID());
 
-        assertThat(result).isEqualTo("User already upvoted! You can only upvote once!");
+        assertThat(result).isFalse();
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
