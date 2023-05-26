@@ -37,8 +37,8 @@ class CommentServiceTest extends ApplicationConfigTest {
     @Autowired
     CommentService commentService;
 
-    Set<PostCategory> CATEGORIES_RECORD = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
     User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
+    Set<PostCategory> CATEGORIES_RECORD = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
     Post POST_RECORD = new Post("title", "contentmusthaveatleast30characters", Instant.now(), CATEGORIES_RECORD, USER_RECORD);
     CommentDTO COMMENT_DTO_RECORD = new CommentDTO("content", UUID.randomUUID());
     Comment COMMENT_RECORD = new Comment(COMMENT_DTO_RECORD.getContent(), Instant.now(), POST_RECORD, USER_RECORD);

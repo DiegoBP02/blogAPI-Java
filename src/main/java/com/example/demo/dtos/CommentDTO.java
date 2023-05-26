@@ -18,6 +18,6 @@ public class CommentDTO {
     @Size(min = 5, max = 150)
     @NotBlank
     private String content;
-    @NotBlank
+    @NotNull
     private UUID postId;
 }

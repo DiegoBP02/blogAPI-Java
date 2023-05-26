@@ -3,6 +3,7 @@ package com.example.demo.controllers;
 import com.example.demo.dtos.CommentDTO;
 import com.example.demo.entities.Comment;
 import com.example.demo.services.CommentService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class CommentController {
     private CommentService commentService;
 
     @PostMapping
-    public ResponseEntity<Comment> createComment(@RequestBody CommentDTO comment) {
+    public ResponseEntity<Comment> createComment(@Valid @RequestBody CommentDTO comment) {
         Comment result = commentService.create(comment);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
