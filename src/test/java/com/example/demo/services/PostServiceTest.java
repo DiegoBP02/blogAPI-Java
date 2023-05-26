@@ -9,6 +9,7 @@ import com.example.demo.entities.enums.Role;
 import com.example.demo.repositories.PostRepository;
 import com.example.demo.services.exceptions.ResourceNotFoundException;
 import com.example.demo.services.exceptions.UnauthorizedAccessException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -34,33 +35,27 @@ class PostServiceTest extends ApplicationConfigTest {
     @Autowired
     PostService postService;
 
+    User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
+    Set<PostCategory> CATEGORIES_RECORD = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
+    PostDTO POST_DTO_RECORD = new PostDTO("title", "contentmusthaveatleast30characters", CATEGORIES_RECORD);
+    Post POST_RECORD = new Post(POST_DTO_RECORD.getTitle(), POST_DTO_RECORD.getContent(), Instant.now(), CATEGORIES_RECORD, USER_RECORD);
+
     @Test
     @DisplayName("should create a post")
     void create() {
-        Set<PostCategory> categories = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-        User user = new User("a", "b", "c", Role.ROLE_USER);
-        PostDTO dto = new PostDTO("title", "content", categories);
-
         Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(user);
+        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        Instant instant = Instant.now();
-        Post post = new Post(dto.getTitle(), dto.getContent(), instant, dto.getCategories(), user);
-        when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(post);
+        when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(POST_RECORD);
 
-        Post result = postService.create(dto);
+        Post result = postService.create(POST_DTO_RECORD);
 
         assertThat(result).isNotNull();
         assertThat(result).isInstanceOf(Post.class);
-        assertThat(result.getTitle()).isEqualTo(dto.getTitle());
-        assertThat(result.getCategories()).isEqualTo(dto.getCategories());
-        assertThat(result.getUpvotes()).isEqualTo(0);
-        assertThat(result.getUsersUpvotesId()).isEmpty();
-        assertThat(result.getPublishDate()).isEqualTo(instant);
-        assertThat(result.getAuthor()).isEqualTo(user);
+        assertThat(result).isEqualTo(POST_RECORD);
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
@@ -70,11 +65,7 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should get all posts")
     void findAll() {
-        User user = new User("a", "b", "c", Role.ROLE_USER);
-        Set<PostCategory> categories = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-        Post post1 = new Post("title", "content", Instant.now(), categories, user);
-        Post post2 = new Post("title", "content", Instant.now(), categories, user);
-        List<Post> posts = Arrays.asList(post1, post2);
+        List<Post> posts = Collections.singletonList(POST_RECORD);
 
         when(postRepository.findAll()).thenReturn(posts);
 
@@ -89,16 +80,12 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should get a post")
     void findById() {
-        User user = new User("a", "b", "c", Role.ROLE_USER);
-        Set<PostCategory> categories = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-        Post post = new Post("title", "content", Instant.now(), categories, user);
-
-        when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(post));
+        when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
 
         Post result = postService.findById(UUID.randomUUID());
 
         assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(post);
+        assertThat(result).isEqualTo(POST_RECORD);
 
         verify(postRepository, times(1)).findById(ArgumentMatchers.any(UUID.class));
     }
@@ -116,27 +103,23 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should update a post")
     void update() {
-        User user = new User("a", "b", "c", Role.ROLE_USER);
-        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
-        Set<PostCategory> categories = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-        Post post = new Post("title", "content", Instant.now(), categories, user);
+        ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
 
         Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(user);
+        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(post);
-        when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(post);
+        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
+        when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(POST_RECORD);
 
-        post.setTitle("new title");
-        post.setContent("new content");
+        POST_RECORD.setTitle("new title");
+        POST_RECORD.setContent("new content");
 
-        Post result = postService.update(UUID.randomUUID(), post);
+        Post result = postService.update(UUID.randomUUID(), POST_RECORD);
 
-        assertThat(result.getTitle()).isEqualTo(post.getTitle());
-        assertThat(result.getContent()).isEqualTo(post.getContent());
+        assertThat(result).isEqualTo(POST_RECORD);
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
@@ -147,11 +130,6 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should throw UnauthorizedAccessException if checkOwnership is invalid")
     void updateUnauthorizedAccessException() {
-        User user = new User("a", "b", "c", Role.ROLE_USER);
-        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
-        Set<PostCategory> categories = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-        Post post = new Post("title", "content", Instant.now(), categories, user);
-
         User user2 = new User("a", "b", "c", Role.ROLE_USER);
         ReflectionTestUtils.setField(user2, "id", UUID.randomUUID());
 
@@ -161,10 +139,10 @@ class PostServiceTest extends ApplicationConfigTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(post);
-        when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(post);
+        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
+        when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(POST_RECORD);
 
-        assertThrows(UnauthorizedAccessException.class, () -> postService.update(UUID.randomUUID(), post));
+        assertThrows(UnauthorizedAccessException.class, () -> postService.update(UUID.randomUUID(), POST_RECORD));
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
@@ -175,18 +153,15 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should delete a post")
     void delete() {
-        User user = new User("a", "b", "c", Role.ROLE_USER);
-        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
-        Set<PostCategory> categories = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-        Post post = new Post("title", "content", Instant.now(), categories, user);
+        ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
 
         Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(user);
+        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(post);
+        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
         doNothing().when(postRepository).deleteById(ArgumentMatchers.any(UUID.class));
 
         postService.delete(UUID.randomUUID());
@@ -200,23 +175,20 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should throw UnauthorizedAccessException if checkOwnership is invalid")
     void deleteUnauthorizedAccessException() {
-        User user = new User("a", "b", "c", Role.ROLE_USER);
-        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
         User user2 = new User("a", "b", "c", Role.ROLE_USER);
         ReflectionTestUtils.setField(user2, "id", UUID.randomUUID());
-        Set<PostCategory> categories = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-        Post post = new Post("title", "content", Instant.now(), categories, user2);
 
         Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(user);
+        when(authentication.getPrincipal()).thenReturn(user2);
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(post);
+        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
         doNothing().when(postRepository).deleteById(ArgumentMatchers.any(UUID.class));
 
-        assertThrows(UnauthorizedAccessException.class, () -> postService.delete(UUID.randomUUID()));
+        assertThrows(UnauthorizedAccessException.class,
+                () -> postService.delete(UUID.randomUUID()));
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
@@ -227,10 +199,7 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should bypass checkOwnership if user is an admin")
     void deleteAdmin() {
-        User user = new User("a", "b", "c", Role.ROLE_USER);
         User user2 = new User("a", "b", "c", Role.ROLE_ADMIN);
-        Set<PostCategory> categories = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-        Post post = new Post("title", "content", Instant.now(), categories, user);
 
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(user2);
@@ -238,7 +207,7 @@ class PostServiceTest extends ApplicationConfigTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(post);
+        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
         doNothing().when(postRepository).deleteById(ArgumentMatchers.any(UUID.class));
 
         postService.delete(UUID.randomUUID());
@@ -252,18 +221,15 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should increase the upvote")
     void increaseUpvote() {
-        User user = new User("a", "b", "c", Role.ROLE_USER);
-        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
-        Set<PostCategory> categories = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-        Post post = new Post("title", "content", Instant.now(), categories, user);
+        ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
 
         Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(user);
+        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(post));
+        when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
 
         boolean result = postService.increaseUpvote(UUID.randomUUID());
 
@@ -278,19 +244,16 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should not increase the upvote if user already upvoted")
     void increaseUpvoteDeny() {
-        User user = new User("a", "b", "c", Role.ROLE_USER);
-        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
-        Set<PostCategory> categories = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-        Post post = new Post("title", "content", Instant.now(), categories, user);
-        post.increaseUpvote(user.getId());
+        ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
+        POST_RECORD.increaseUpvote(USER_RECORD.getId());
 
         Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(user);
+        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
         SecurityContext securityContext = mock(SecurityContext.class);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
 
-        when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(post));
+        when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
 
         boolean result = postService.increaseUpvote(UUID.randomUUID());
 
