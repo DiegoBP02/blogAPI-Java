@@ -127,7 +127,7 @@ class CommentServiceTest extends ApplicationConfigTest {
 
         Comment result = commentService.update(UUID.randomUUID(), COMMENT_RECORD);
 
-        assertThat(result.getContent()).isEqualTo(COMMENT_RECORD.getContent());
+        assertThat(result).isEqualTo(COMMENT_RECORD);
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
