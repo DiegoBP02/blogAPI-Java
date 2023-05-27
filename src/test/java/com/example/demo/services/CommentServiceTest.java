@@ -10,6 +10,7 @@ import com.example.demo.entities.enums.Role;
 import com.example.demo.repositories.CommentRepository;
 import com.example.demo.services.exceptions.ResourceNotFoundException;
 import com.example.demo.services.exceptions.UnauthorizedAccessException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,15 +44,23 @@ class CommentServiceTest extends ApplicationConfigTest {
     CommentDTO COMMENT_DTO_RECORD = new CommentDTO("content", UUID.randomUUID());
     Comment COMMENT_RECORD = new Comment(COMMENT_DTO_RECORD.getContent(), Instant.now(), POST_RECORD, USER_RECORD);
 
+    private Authentication authentication;
+    private SecurityContext securityContext;
+
+    @BeforeEach
+    void setupSecurityContext() {
+        authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
+
+        securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        SecurityContextHolder.setContext(securityContext);
+    }
+
     @Test
     @DisplayName("should create a comment")
     void create() {
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
         when(commentRepository.save(any(Comment.class))).thenReturn(COMMENT_RECORD);
         when(postService.findById(any(UUID.class))).thenReturn(POST_RECORD);
 
@@ -104,7 +113,7 @@ class CommentServiceTest extends ApplicationConfigTest {
     void findByIdNotFound() {
         when(commentRepository.findById(any(UUID.class))).thenThrow(ResourceNotFoundException.class);
 
-        assertThrows(ResourceNotFoundException.class, () -> postService.findById(UUID.randomUUID()));
+        assertThrows(ResourceNotFoundException.class, () -> commentRepository.findById(UUID.randomUUID()));
 
         verify(commentRepository, times(1)).findById(any(UUID.class));
     }
@@ -113,12 +122,6 @@ class CommentServiceTest extends ApplicationConfigTest {
     @DisplayName("should update a comment")
     void update() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
-
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(commentRepository.getReferenceById(any(UUID.class))).thenReturn(COMMENT_RECORD);
         when(commentRepository.save(any(Comment.class))).thenReturn(COMMENT_RECORD);
@@ -141,11 +144,7 @@ class CommentServiceTest extends ApplicationConfigTest {
         User user2 = new User("x","y","z", Role.ROLE_USER);
         ReflectionTestUtils.setField(user2, "id", UUID.randomUUID());
 
-        Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(user2);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(commentRepository.getReferenceById(any(UUID.class))).thenReturn(COMMENT_RECORD);
         when(commentRepository.save(any(Comment.class))).thenReturn(COMMENT_RECORD);
@@ -164,12 +163,6 @@ class CommentServiceTest extends ApplicationConfigTest {
     void delete() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
 
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
         when(commentRepository.getReferenceById(any(UUID.class))).thenReturn(COMMENT_RECORD);
         doNothing().when(commentRepository).deleteById(any(UUID.class));
 
@@ -187,11 +180,7 @@ class CommentServiceTest extends ApplicationConfigTest {
         User user2 = new User("x","y","z", Role.ROLE_USER);
         ReflectionTestUtils.setField(user2, "id", UUID.randomUUID());
 
-        Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(user2);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(commentRepository.getReferenceById(any(UUID.class))).thenReturn(COMMENT_RECORD);
         doNothing().when(commentRepository).deleteById(any(UUID.class));
@@ -208,14 +197,9 @@ class CommentServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should bypass checkOwnership if user is an admin")
     void deleteAdmin() {
-        User user = new User("x","y","z", Role.ROLE_ADMIN);
-        ReflectionTestUtils.setField(user, "id", UUID.randomUUID());
+        User user2 = new User("a", "b", "c", Role.ROLE_ADMIN);
 
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(user);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
+        when(authentication.getPrincipal()).thenReturn(user2);
 
         when(commentRepository.getReferenceById(any(UUID.class))).thenReturn(COMMENT_RECORD);
         doNothing().when(commentRepository).deleteById(any(UUID.class));
@@ -232,12 +216,6 @@ class CommentServiceTest extends ApplicationConfigTest {
     @DisplayName("should increase the upvote")
     void increaseUpvote() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
-
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(commentRepository.findById(any(UUID.class))).thenReturn(Optional.of(COMMENT_RECORD));
 
@@ -256,12 +234,6 @@ class CommentServiceTest extends ApplicationConfigTest {
     void increaseUpvoteDeny() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
         COMMENT_RECORD.increaseUpvote(USER_RECORD.getId());
-
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(commentRepository.findById(any(UUID.class))).thenReturn(Optional.of(COMMENT_RECORD));
 

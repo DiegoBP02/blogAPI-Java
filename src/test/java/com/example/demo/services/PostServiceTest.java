@@ -40,15 +40,23 @@ class PostServiceTest extends ApplicationConfigTest {
     PostDTO POST_DTO_RECORD = new PostDTO("title", "contentmusthaveatleast30characters", CATEGORIES_RECORD);
     Post POST_RECORD = new Post(POST_DTO_RECORD.getTitle(), POST_DTO_RECORD.getContent(), Instant.now(), CATEGORIES_RECORD, USER_RECORD);
 
+    private Authentication authentication;
+    private SecurityContext securityContext;
+
+    @BeforeEach
+    void setupSecurityContext() {
+        authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
+
+        securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        SecurityContextHolder.setContext(securityContext);
+    }
+
     @Test
     @DisplayName("should create a post")
     void create() {
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
         when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(POST_RECORD);
 
         Post result = postService.create(POST_DTO_RECORD);
@@ -105,12 +113,6 @@ class PostServiceTest extends ApplicationConfigTest {
     void update() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
 
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
-
         when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
         when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(POST_RECORD);
 
@@ -133,11 +135,7 @@ class PostServiceTest extends ApplicationConfigTest {
         User user2 = new User("a", "b", "c", Role.ROLE_USER);
         ReflectionTestUtils.setField(user2, "id", UUID.randomUUID());
 
-        Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(user2);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
         when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(POST_RECORD);
@@ -154,12 +152,6 @@ class PostServiceTest extends ApplicationConfigTest {
     @DisplayName("should delete a post")
     void delete() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
-
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
         doNothing().when(postRepository).deleteById(ArgumentMatchers.any(UUID.class));
@@ -178,11 +170,7 @@ class PostServiceTest extends ApplicationConfigTest {
         User user2 = new User("a", "b", "c", Role.ROLE_USER);
         ReflectionTestUtils.setField(user2, "id", UUID.randomUUID());
 
-        Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(user2);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
         doNothing().when(postRepository).deleteById(ArgumentMatchers.any(UUID.class));
@@ -201,11 +189,7 @@ class PostServiceTest extends ApplicationConfigTest {
     void deleteAdmin() {
         User user2 = new User("a", "b", "c", Role.ROLE_ADMIN);
 
-        Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(user2);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
         doNothing().when(postRepository).deleteById(ArgumentMatchers.any(UUID.class));
@@ -222,12 +206,6 @@ class PostServiceTest extends ApplicationConfigTest {
     @DisplayName("should increase the upvote")
     void increaseUpvote() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
-
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
 
@@ -246,12 +224,6 @@ class PostServiceTest extends ApplicationConfigTest {
     void increaseUpvoteDeny() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
         POST_RECORD.increaseUpvote(USER_RECORD.getId());
-
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(USER_RECORD);
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
 
         when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
 
