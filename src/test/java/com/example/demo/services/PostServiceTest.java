@@ -12,7 +12,6 @@ import com.example.demo.services.exceptions.UnauthorizedAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.core.Authentication;
@@ -57,7 +56,7 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should create a post")
     void create() {
-        when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(POST_RECORD);
+        when(postRepository.save(any(Post.class))).thenReturn(POST_RECORD);
 
         Post result = postService.create(POST_DTO_RECORD);
 
@@ -67,7 +66,7 @@ class PostServiceTest extends ApplicationConfigTest {
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
-        verify(postRepository, times(1)).save(ArgumentMatchers.any(Post.class));
+        verify(postRepository, times(1)).save(any(Post.class));
     }
 
     @Test
@@ -88,24 +87,24 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should get a post")
     void findById() {
-        when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
+        when(postRepository.findById(any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
 
         Post result = postService.findById(UUID.randomUUID());
 
         assertThat(result).isNotNull();
         assertThat(result).isEqualTo(POST_RECORD);
 
-        verify(postRepository, times(1)).findById(ArgumentMatchers.any(UUID.class));
+        verify(postRepository, times(1)).findById(any(UUID.class));
     }
 
     @Test
     @DisplayName("should throw ResourceNotFoundException if no post is found")
     void findByIdNotFound() {
-        when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenThrow(ResourceNotFoundException.class);
+        when(postRepository.findById(any(UUID.class))).thenThrow(ResourceNotFoundException.class);
 
         assertThrows(ResourceNotFoundException.class, () -> postService.findById(UUID.randomUUID()));
 
-        verify(postRepository, times(1)).findById(ArgumentMatchers.any(UUID.class));
+        verify(postRepository, times(1)).findById(any(UUID.class));
     }
 
     @Test
@@ -113,8 +112,8 @@ class PostServiceTest extends ApplicationConfigTest {
     void update() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
 
-        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
-        when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(POST_RECORD);
+        when(postRepository.getReferenceById(any(UUID.class))).thenReturn(POST_RECORD);
+        when(postRepository.save(any(Post.class))).thenReturn(POST_RECORD);
 
         POST_RECORD.setTitle("new title");
         POST_RECORD.setContent("new content");
@@ -125,8 +124,8 @@ class PostServiceTest extends ApplicationConfigTest {
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
-        verify(postRepository, times(1)).getReferenceById(ArgumentMatchers.any(UUID.class));
-        verify(postRepository, times(1)).save(ArgumentMatchers.any(Post.class));
+        verify(postRepository, times(1)).getReferenceById(any(UUID.class));
+        verify(postRepository, times(1)).save(any(Post.class));
     }
 
     @Test
@@ -137,15 +136,15 @@ class PostServiceTest extends ApplicationConfigTest {
 
         when(authentication.getPrincipal()).thenReturn(user2);
 
-        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
-        when(postRepository.save(ArgumentMatchers.any(Post.class))).thenReturn(POST_RECORD);
+        when(postRepository.getReferenceById(any(UUID.class))).thenReturn(POST_RECORD);
+        when(postRepository.save(any(Post.class))).thenReturn(POST_RECORD);
 
         assertThrows(UnauthorizedAccessException.class, () -> postService.update(UUID.randomUUID(), POST_RECORD));
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
-        verify(postRepository, times(1)).getReferenceById(ArgumentMatchers.any(UUID.class));
-        verify(postRepository, never()).save(ArgumentMatchers.any(Post.class));
+        verify(postRepository, times(1)).getReferenceById(any(UUID.class));
+        verify(postRepository, never()).save(any(Post.class));
     }
 
     @Test
@@ -153,15 +152,15 @@ class PostServiceTest extends ApplicationConfigTest {
     void delete() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
 
-        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
-        doNothing().when(postRepository).deleteById(ArgumentMatchers.any(UUID.class));
+        when(postRepository.getReferenceById(any(UUID.class))).thenReturn(POST_RECORD);
+        doNothing().when(postRepository).deleteById(any(UUID.class));
 
         postService.delete(UUID.randomUUID());
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
-        verify(postRepository, times(1)).getReferenceById(ArgumentMatchers.any(UUID.class));
-        verify(postRepository, times(1)).deleteById(ArgumentMatchers.any(UUID.class));
+        verify(postRepository, times(1)).getReferenceById(any(UUID.class));
+        verify(postRepository, times(1)).deleteById(any(UUID.class));
     }
 
     @Test
@@ -172,16 +171,16 @@ class PostServiceTest extends ApplicationConfigTest {
 
         when(authentication.getPrincipal()).thenReturn(user2);
 
-        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
-        doNothing().when(postRepository).deleteById(ArgumentMatchers.any(UUID.class));
+        when(postRepository.getReferenceById(any(UUID.class))).thenReturn(POST_RECORD);
+        doNothing().when(postRepository).deleteById(any(UUID.class));
 
         assertThrows(UnauthorizedAccessException.class,
                 () -> postService.delete(UUID.randomUUID()));
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
-        verify(postRepository, times(1)).getReferenceById(ArgumentMatchers.any(UUID.class));
-        verify(postRepository, never()).deleteById(ArgumentMatchers.any(UUID.class));
+        verify(postRepository, times(1)).getReferenceById(any(UUID.class));
+        verify(postRepository, never()).deleteById(any(UUID.class));
     }
 
     @Test
@@ -191,15 +190,15 @@ class PostServiceTest extends ApplicationConfigTest {
 
         when(authentication.getPrincipal()).thenReturn(user2);
 
-        when(postRepository.getReferenceById(ArgumentMatchers.any(UUID.class))).thenReturn(POST_RECORD);
-        doNothing().when(postRepository).deleteById(ArgumentMatchers.any(UUID.class));
+        when(postRepository.getReferenceById(any(UUID.class))).thenReturn(POST_RECORD);
+        doNothing().when(postRepository).deleteById(any(UUID.class));
 
         postService.delete(UUID.randomUUID());
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
-        verify(postRepository, times(1)).getReferenceById(ArgumentMatchers.any(UUID.class));
-        verify(postRepository, times(1)).deleteById(ArgumentMatchers.any(UUID.class));
+        verify(postRepository, times(1)).getReferenceById(any(UUID.class));
+        verify(postRepository, times(1)).deleteById(any(UUID.class));
     }
 
     @Test
@@ -207,7 +206,7 @@ class PostServiceTest extends ApplicationConfigTest {
     void increaseUpvote() {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
 
-        when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
+        when(postRepository.findById(any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
 
         boolean result = postService.increaseUpvote(UUID.randomUUID());
 
@@ -215,8 +214,8 @@ class PostServiceTest extends ApplicationConfigTest {
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
-        verify(postRepository, times(1)).findById(ArgumentMatchers.any(UUID.class));
-        verify(postRepository, times(1)).save(ArgumentMatchers.any(Post.class));
+        verify(postRepository, times(1)).findById(any(UUID.class));
+        verify(postRepository, times(1)).save(any(Post.class));
     }
 
     @Test
@@ -225,7 +224,7 @@ class PostServiceTest extends ApplicationConfigTest {
         ReflectionTestUtils.setField(USER_RECORD, "id", UUID.randomUUID());
         POST_RECORD.increaseUpvote(USER_RECORD.getId());
 
-        when(postRepository.findById(ArgumentMatchers.any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
+        when(postRepository.findById(any(UUID.class))).thenReturn(Optional.of(POST_RECORD));
 
         boolean result = postService.increaseUpvote(UUID.randomUUID());
 
@@ -233,8 +232,8 @@ class PostServiceTest extends ApplicationConfigTest {
 
         verify(authentication, times(1)).getPrincipal();
         verify(securityContext, times(1)).getAuthentication();
-        verify(postRepository, times(1)).findById(ArgumentMatchers.any(UUID.class));
-        verify(postRepository, never()).save(ArgumentMatchers.any(Post.class));
+        verify(postRepository, times(1)).findById(any(UUID.class));
+        verify(postRepository, never()).save(any(Post.class));
     }
 
 }

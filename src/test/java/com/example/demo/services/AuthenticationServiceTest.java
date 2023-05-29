@@ -3,17 +3,14 @@ package com.example.demo.services;
 import com.example.demo.ApplicationConfigTest;
 import com.example.demo.dtos.LoginDTO;
 import com.example.demo.dtos.RegisterDTO;
-import com.example.demo.entities.Post;
 import com.example.demo.entities.User;
 import com.example.demo.entities.enums.Role;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.exceptions.DuplicateKeyException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,8 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -46,11 +41,13 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
     private PasswordEncoder passwordEncoder;
 
     User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
+    RegisterDTO REGISTER_DTO_RECORD = new RegisterDTO(USER_RECORD.getUsername(), USER_RECORD.getPassword(),USER_RECORD.getEmail());
+    LoginDTO LOGIN_DTO_RECORD = new LoginDTO(USER_RECORD.getUsername(), USER_RECORD.getPassword());
 
     @Test
     @DisplayName("should return an user")
     void loadUserByUsername() {
-        when(userRepository.findByUsername(ArgumentMatchers.anyString()))
+        when(userRepository.findByUsername(anyString()))
                 .thenReturn(USER_RECORD);
 
         UserDetails result = authenticationService.loadUserByUsername(USER_RECORD.getUsername());
@@ -59,72 +56,67 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
         assertThat(result.getUsername()).isEqualTo(USER_RECORD.getUsername());
         assertThat(result.getPassword()).isEqualTo(USER_RECORD.getPassword());
 
-        verify(userRepository, times(1)).findByUsername(ArgumentMatchers.anyString());
+        verify(userRepository, times(1)).findByUsername(anyString());
     }
 
     @Test
     @DisplayName("should throw UsernameNotFoundException if there is no user")
     void loadUserByUsernameUsernameNotFoundException() {
-        when(userRepository.findByUsername(ArgumentMatchers.anyString()))
+        when(userRepository.findByUsername(anyString()))
                 .thenReturn(null);
 
         assertThrows(UsernameNotFoundException.class,() ->
                 authenticationService.loadUserByUsername(USER_RECORD.getUsername()));
 
-        verify(userRepository, times(1)).findByUsername(ArgumentMatchers.anyString());
+        verify(userRepository, times(1)).findByUsername(anyString());
     }
 
     @Test
     @DisplayName("should return a token")
     void register() {
-        RegisterDTO registerDTO = new RegisterDTO("a","b","c");
 
-        when(userRepository.save(ArgumentMatchers.any(User.class))).thenReturn(null);
-        when(tokenService.generateToken(ArgumentMatchers.any(User.class))).thenReturn("token");
+        when(userRepository.save(any(User.class))).thenReturn(null);
+        when(tokenService.generateToken(any(User.class))).thenReturn("token");
 
-        String result = authenticationService.register(registerDTO);
+        String result = authenticationService.register(REGISTER_DTO_RECORD);
 
         assertThat(result).isNotNull();
         assertThat(result).isEqualTo("token");
 
-        verify(userRepository, times(1)).save(ArgumentMatchers.any(User.class));
-        verify(tokenService, times(1)).generateToken(ArgumentMatchers.any(User.class));
+        verify(userRepository, times(1)).save(any(User.class));
+        verify(tokenService, times(1)).generateToken(any(User.class));
     }
 
     @Test
     @DisplayName("should throw DuplicateKeyException if user alredy exists")
     void registerDuplicateKeyException() {
-        RegisterDTO registerDTO = new RegisterDTO("a","b","c");
-
-        when(userRepository.save(ArgumentMatchers.any(User.class)))
+        when(userRepository.save(any(User.class)))
                 .thenThrow(new DataIntegrityViolationException("exception"));
 
         assertThrows(DuplicateKeyException.class,
-                () -> authenticationService.register(registerDTO));
+                () -> authenticationService.register(REGISTER_DTO_RECORD));
 
-        verify(userRepository, times(1)).save(ArgumentMatchers.any(User.class));
-        verify(tokenService, never()).generateToken(ArgumentMatchers.any(User.class));
+        verify(userRepository, times(1)).save(any(User.class));
+        verify(tokenService, never()).generateToken(any(User.class));
     }
 
     @Test
     @DisplayName("should return a token")
     void login() {
-        LoginDTO loginDTO = new LoginDTO("a","b");
-
         Authentication authenticate = mock(Authentication.class);
-        when(authenticationManager.authenticate(ArgumentMatchers.any(UsernamePasswordAuthenticationToken.class)))
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authenticate);
         when(authenticate.getPrincipal()).thenReturn(USER_RECORD);
-        when(tokenService.generateToken(ArgumentMatchers.any(User.class))).thenReturn("token");
+        when(tokenService.generateToken(any(User.class))).thenReturn("token");
 
-        String result = authenticationService.login(loginDTO);
+        String result = authenticationService.login(LOGIN_DTO_RECORD);
 
         assertThat(result).isNotNull();
         assertThat(result).isEqualTo("token");
 
         verify(authenticationManager, times(1))
-                .authenticate(ArgumentMatchers.any(UsernamePasswordAuthenticationToken.class));
+                .authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(authenticate, times(1)).getPrincipal();
-        verify(tokenService, times(1)).generateToken(ArgumentMatchers.any(User.class));
+        verify(tokenService, times(1)).generateToken(any(User.class));
     }
 }

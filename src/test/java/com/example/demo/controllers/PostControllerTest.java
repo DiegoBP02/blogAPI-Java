@@ -12,7 +12,6 @@ import com.example.demo.services.exceptions.UnauthorizedAccessException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -193,7 +192,7 @@ class PostControllerTest extends ApplicationConfigTest {
     @WithMockUser
     @DisplayName("should delete a post")
     void delete() throws Exception {
-        doNothing().when(postService).delete(ArgumentMatchers.any(UUID.class));
+        doNothing().when(postService).delete(any(UUID.class));
 
         mockMvc.perform(MockMvcRequestBuilders
                         .delete(PATH + "/" + UUID.randomUUID().toString())
@@ -208,7 +207,7 @@ class PostControllerTest extends ApplicationConfigTest {
     @DisplayName("should throw UnauthorizedAccessException for invalid checkOwnership")
     void deleteUnauthorizedAccessException() throws Exception {
         doThrow(new UnauthorizedAccessException("You are not authorized to update this object. It does not belong to you"))
-                .when(postService).delete(ArgumentMatchers.any(UUID.class));
+                .when(postService).delete(any(UUID.class));
 
         mockMvc.perform(MockMvcRequestBuilders
                 .delete(PATH + "/" + UUID.randomUUID().toString())
