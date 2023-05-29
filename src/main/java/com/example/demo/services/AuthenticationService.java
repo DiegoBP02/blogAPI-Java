@@ -53,7 +53,8 @@ public class AuthenticationService implements UserDetailsService {
             return tokenService.generateToken(user);
         } catch (
                 DataIntegrityViolationException e) {
-            throw new DuplicateKeyException(Objects.requireNonNull(e.getRootCause()).getMessage());
+            String errorMessage = e.getRootCause() != null ? e.getRootCause().getMessage() : e.getMessage();
+            throw new DuplicateKeyException(errorMessage);
         }
     }
 
