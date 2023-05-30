@@ -1,17 +1,20 @@
 package com.example.demo.controllers;
 
 import com.example.demo.ApplicationConfigTest;
+import com.example.demo.dtos.ChangePasswordDTO;
 import com.example.demo.dtos.LoginDTO;
 import com.example.demo.dtos.RegisterDTO;
 import com.example.demo.entities.User;
 import com.example.demo.entities.enums.Role;
 import com.example.demo.services.AuthenticationService;
+import com.example.demo.services.exceptions.InvalidOldPasswordException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -111,5 +114,42 @@ class AuthControllerTest extends ApplicationConfigTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(result ->
                         assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("should change the password")
+    void changePassword() throws Exception {
+        ChangePasswordDTO changePasswordDTO = new ChangePasswordDTO("oldPassword", "newPassword");
+        MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
+                .post(PATH + "/change-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(this.objectMapper.writeValueAsString(changePasswordDTO));
+
+        mockMvc.perform(mockRequest)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", notNullValue()))
+                .andExpect(content().string("Password updated successfully!"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("should throw InvalidOldPasswordException if password is wrong")
+    void changePasswordInvalidUser() throws Exception {
+        doThrow(InvalidOldPasswordException.class).when(authenticationService)
+                .changePassword(any(ChangePasswordDTO.class));
+
+        ChangePasswordDTO changePasswordDTO = new ChangePasswordDTO("oldPasswordWrong", "newPassword");
+        MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
+                .post(PATH + "/change-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(this.objectMapper.writeValueAsString(changePasswordDTO));
+
+        mockMvc.perform(mockRequest)
+                .andExpect(status().isBadRequest())
+                .andExpect(result ->
+                        assertTrue(result.getResolvedException() instanceof InvalidOldPasswordException));
     }
 }

@@ -1,17 +1,20 @@
 package com.example.demo.services;
 
+import com.example.demo.dtos.ChangePasswordDTO;
 import com.example.demo.dtos.LoginDTO;
 import com.example.demo.dtos.RegisterDTO;
 import com.example.demo.entities.User;
 import com.example.demo.entities.enums.Role;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.exceptions.DuplicateKeyException;
+import com.example.demo.services.exceptions.InvalidOldPasswordException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,6 +38,8 @@ public class AuthenticationService implements UserDetailsService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private PasswordService passwordService;
 
     @Override
     public UserDetails loadUserByUsername(String username) {
@@ -68,5 +73,15 @@ public class AuthenticationService implements UserDetailsService {
             var user = (User) authenticate.getPrincipal();
 
             return tokenService.generateToken(user);
+    }
+
+    public void changePassword(ChangePasswordDTO changePasswordDTO) {
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if(!passwordService.isPasswordMatch(user, changePasswordDTO.getOldPassword())) {
+            throw new InvalidOldPasswordException("Incorrect password. Please make sure the password is correct.");
+        };
+
+        passwordService.changePassword(user, changePasswordDTO.getNewPassword());
     }
 }

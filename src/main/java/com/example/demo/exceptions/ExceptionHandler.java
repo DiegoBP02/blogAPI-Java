@@ -1,10 +1,7 @@
 package com.example.demo.exceptions;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.example.demo.services.exceptions.DatabaseException;
-import com.example.demo.services.exceptions.DuplicateKeyException;
-import com.example.demo.services.exceptions.ResourceNotFoundException;
-import com.example.demo.services.exceptions.UnauthorizedAccessException;
+import com.example.demo.services.exceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -85,6 +82,14 @@ public class ExceptionHandler {
     public ResponseEntity<StandardError> tokenError(UnauthorizedAccessException e, HttpServletRequest request) {
         String error = "Access denied";
         HttpStatus status = HttpStatus.FORBIDDEN;
+        StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(InvalidOldPasswordException.class)
+    public ResponseEntity<StandardError> invalidOldPassword(InvalidOldPasswordException e, HttpServletRequest request) {
+        String error = "Invalid password";
+        HttpStatus status = HttpStatus.BAD_REQUEST;
         StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
         return ResponseEntity.status(status).body(err);
     }

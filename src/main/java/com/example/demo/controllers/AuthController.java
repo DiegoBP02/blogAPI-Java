@@ -1,5 +1,6 @@
 package com.example.demo.controllers;
 
+import com.example.demo.dtos.ChangePasswordDTO;
 import com.example.demo.dtos.LoginDTO;
 import com.example.demo.dtos.RegisterDTO;
 import com.example.demo.services.AuthenticationService;
@@ -26,5 +27,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<String> login(@Valid @RequestBody LoginDTO login) {
         return ResponseEntity.ok().body(authenticationService.login(login));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordDTO changePasswordDTO) {
+        authenticationService.changePassword(changePasswordDTO);
+        String message = "Password updated successfully!";
+        return ResponseEntity.ok().body(message);
     }
 }
