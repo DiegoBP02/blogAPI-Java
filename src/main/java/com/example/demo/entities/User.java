@@ -10,11 +10,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.Instant;
 import java.util.*;
 
 @Entity(name = "users")
-@Table(name = "users", uniqueConstraints = {@UniqueConstraint(columnNames = {"email", "username"})})
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "username"),
+        @UniqueConstraint(columnNames = "email")
+})
 public class User implements UserDetails {
 
     @Id

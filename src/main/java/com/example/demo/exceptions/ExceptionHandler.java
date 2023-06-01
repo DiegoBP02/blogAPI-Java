@@ -1,6 +1,7 @@
 package com.example.demo.exceptions;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.example.demo.controllers.exceptions.RateLimitException;
 import com.example.demo.services.exceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -90,6 +91,14 @@ public class ExceptionHandler {
     public ResponseEntity<StandardError> invalidOldPassword(InvalidOldPasswordException e, HttpServletRequest request) {
         String error = "Invalid password";
         HttpStatus status = HttpStatus.BAD_REQUEST;
+        StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<StandardError> rateLimit(RateLimitException e, HttpServletRequest request) {
+        String error = "Too many requests";
+        HttpStatus status = HttpStatus.TOO_MANY_REQUESTS;
         StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
         return ResponseEntity.status(status).body(err);
     }
