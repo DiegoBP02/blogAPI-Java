@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -94,18 +95,59 @@ class PostControllerTest extends ApplicationConfigTest {
     @WithMockUser()
     @DisplayName("should return a list of posts")
     void findAll() throws Exception {
-        List<Post> posts = new ArrayList<>(Collections.singletonList(POST_RECORD));
-
-        when(postService.findAll()).thenReturn(posts);
+        List<Post> postList = Collections.singletonList(POST_RECORD);
+        Pageable paging = PageRequest.of(0,5,Sort.by("title"));
+        Page<Post> posts = new PageImpl<>(postList, paging, 1);
+        when(postService.findAll(anyInt(),anyInt(),anyString())).thenReturn(posts);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .get(PATH)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].title", is(POST_RECORD.getTitle())));
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].title", is(POST_RECORD.getTitle())));
 
-            verify(postService, times(1)).findAll();
+            verify(postService, times(1)).findAll(anyInt(),anyInt(),anyString());
+    }
+
+    @Test
+    @WithMockUser()
+    @DisplayName("should return a list of posts with pagination information")
+    void findAllPagination() throws Exception {
+        List<Post> postList = Collections.singletonList(POST_RECORD);
+        Pageable paging = PageRequest.of(0,5,Sort.by("title"));
+        Page<Post> posts = new PageImpl<>(postList, paging, 1);
+        when(postService.findAll(anyInt(),anyInt(),anyString())).thenReturn(posts);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get(PATH)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].title", is(POST_RECORD.getTitle())))
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.pageable.sort.empty").value(false))
+                .andExpect(jsonPath("$.pageable.sort.sorted").value(true))
+                .andExpect(jsonPath("$.pageable.sort.unsorted").value(false))
+                .andExpect(jsonPath("$.pageable.offset").value(0))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0))
+                .andExpect(jsonPath("$.pageable.pageSize").value(5))
+                .andExpect(jsonPath("$.pageable.unpaged").value(false))
+                .andExpect(jsonPath("$.pageable.paged").value(true))
+                .andExpect(jsonPath("$.last").value(true))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.size").value(5))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.sort.empty").value(false))
+                .andExpect(jsonPath("$.sort.sorted").value(true))
+                .andExpect(jsonPath("$.sort.unsorted").value(false))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.numberOfElements").value(1))
+                .andExpect(jsonPath("$.empty").value(false));
+
+
+        verify(postService, times(1)).findAll(anyInt(),anyInt(),anyString());
     }
 
     @Test

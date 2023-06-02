@@ -12,8 +12,10 @@ import com.example.demo.services.exceptions.UnauthorizedAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -38,6 +41,10 @@ class PostServiceTest extends ApplicationConfigTest {
     Set<PostCategory> CATEGORIES_RECORD = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
     PostDTO POST_DTO_RECORD = new PostDTO("title", "contentmusthaveatleast30characters", CATEGORIES_RECORD);
     Post POST_RECORD = new Post(POST_DTO_RECORD.getTitle(), POST_DTO_RECORD.getContent(), Instant.now(), CATEGORIES_RECORD, USER_RECORD);
+    Post POST_RECORD_2 = new Post("z", POST_DTO_RECORD.getContent(), Instant.now().plusSeconds(1), CATEGORIES_RECORD, USER_RECORD);
+    List<Post> POST_LIST_RECORD = Arrays.asList(POST_RECORD, POST_RECORD_2);
+    Pageable PAGING_RECORD = PageRequest.of(0, 5, Sort.by("title"));
+    Page<Post> POSTS_RECORD = new PageImpl<>(POST_LIST_RECORD, PAGING_RECORD, 1);
 
     private Authentication authentication;
     private SecurityContext securityContext;
@@ -72,16 +79,82 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should get all posts")
     void findAll() {
-        List<Post> posts = Collections.singletonList(POST_RECORD);
+        when(postRepository.findAll(any(Pageable.class))).thenReturn(POSTS_RECORD);
 
-        when(postRepository.findAll()).thenReturn(posts);
-
-        List<Post> result = postService.findAll();
+        Page<Post> result = postService.findAll(0, 5, "title");
 
         assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(posts);
+        assertThat(result.getContent()).isEqualTo(POST_LIST_RECORD);
 
-        verify(postRepository, times(1)).findAll();
+        verify(postRepository, times(1)).findAll(any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("should return the correct page and number of pages")
+    void findAllWithPageNo() {
+        when(postRepository.findAll(any(Pageable.class))).thenReturn(POSTS_RECORD);
+
+        Page<Post> result = postService.findAll(0, 5, "title");
+
+        assertThat(result).isNotNull();
+        assertThat(result.getNumber()).isEqualTo(0);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+
+        verify(postRepository, times(1)).findAll(any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("should return the correct number of items per page")
+    void findAllWithPageSize() {
+        when(postRepository.findAll(any(Pageable.class))).thenReturn(POSTS_RECORD);
+
+        Page<Post> result = postService.findAll(0, 5, "title");
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(POST_LIST_RECORD.toArray().length);
+
+        verify(postRepository, times(1)).findAll(any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("should return the correct sorting properties")
+    void findAllWithSortBy() {
+        when(postRepository.findAll(any(Pageable.class))).thenReturn(POSTS_RECORD);
+
+        Page<Post> result = postService.findAll(0, 5, "title");
+
+        assertThat(result).isNotNull();
+        assertThat(result.getPageable().getPageNumber()).isEqualTo(PAGING_RECORD.getPageNumber());
+        assertThat(result.getPageable().getSort()).isEqualTo(PAGING_RECORD.getSort());
+        assertThat(result.getPageable().getPageSize()).isEqualTo(PAGING_RECORD.getPageSize());
+
+        verify(postRepository, times(1)).findAll(any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("should return the posts, correct page, number of items per page and " +
+            "if the page is sorted correctly")
+    void findAllCompleteFunction() {
+        List<Post> sortedPostList = POST_LIST_RECORD.stream()
+                .sorted(Comparator.comparing(Post::getTitle))
+                .toList();
+
+        Page<Post> sortedPosts = new PageImpl<>(sortedPostList, PAGING_RECORD, 1);
+
+        when(postRepository.findAll(any(Pageable.class))).thenReturn(sortedPosts);
+        Page<Post> result = postService.findAll(0, 5, "title");
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isEqualTo(sortedPostList);
+        assertThat(result.getContent().get(1)).isEqualTo(POST_RECORD_2);
+        assertThat(result.getNumber()).isEqualTo(0);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+        assertThat(result.getTotalElements()).isEqualTo(POST_LIST_RECORD.toArray().length);
+        assertThat(result.getPageable().getPageNumber()).isEqualTo(PAGING_RECORD.getPageNumber());
+        assertThat(result.getPageable().getSort()).isEqualTo(PAGING_RECORD.getSort());
+        assertThat(result.getPageable().getPageSize()).isEqualTo(PAGING_RECORD.getPageSize());
+
+        verify(postRepository, times(1)).findAll(any(Pageable.class));
     }
 
     @Test
