@@ -36,7 +36,8 @@ public class Configurations {
         return http.csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().authorizeHttpRequests()
-                .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register")
+                .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register",
+                        "/auth/forgot-password", "/auth/reset-password")
                 .permitAll()
                 .anyRequest().authenticated()
                 .and().addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)

@@ -111,7 +111,7 @@ class CommentServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should throw ResourceNotFoundException if no comment is found")
     void findByIdNotFound() {
-        when(commentRepository.findById(any(UUID.class))).thenThrow(ResourceNotFoundException.class);
+        when(commentRepository.findById(any(UUID.class))).thenThrow(new ResourceNotFoundException(anyString()));
 
         assertThrows(ResourceNotFoundException.class, () -> commentRepository.findById(UUID.randomUUID()));
 

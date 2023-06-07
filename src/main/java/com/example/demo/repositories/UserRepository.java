@@ -12,8 +12,13 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends CrudRepository<User, UUID> {
     User findByUsername(String username);
+
     @Transactional
     @Query("UPDATE users SET failedAttempt = ?1 WHERE username = ?2")
     @Modifying
     void updateFailedAttempts(int failAttempts, String username);
+
+    User findByEmail(String email);
+
+    User findByResetPasswordToken(UUID token);
 }

@@ -32,6 +32,8 @@ public class User implements UserDetails {
     private int failedAttempt;
     @Column(name = "lock_time")
     private Date lockTime;
+    @Column(name = "reset_password_token")
+    private UUID resetPasswordToken;
 
     @JsonIgnore
     @OneToMany(mappedBy = "author")
@@ -113,5 +115,13 @@ public class User implements UserDetails {
 
     public void setLockTime(Date lockTime) {
         this.lockTime = lockTime;
+    }
+
+    public UUID getResetPasswordToken() {
+        return resetPasswordToken;
+    }
+
+    public void setResetPasswordToken(UUID resetPasswordToken) {
+        this.resetPasswordToken = resetPasswordToken;
     }
 }

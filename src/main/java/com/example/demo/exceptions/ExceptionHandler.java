@@ -1,8 +1,12 @@
 package com.example.demo.exceptions;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.example.demo.controllers.exceptions.BadRequestException;
+import com.example.demo.controllers.exceptions.InvalidTokenException;
 import com.example.demo.controllers.exceptions.RateLimitException;
 import com.example.demo.services.exceptions.*;
+import jakarta.mail.MessagingException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -99,6 +103,38 @@ public class ExceptionHandler {
     public ResponseEntity<StandardError> rateLimit(RateLimitException e, HttpServletRequest request) {
         String error = "Too many requests";
         HttpStatus status = HttpStatus.TOO_MANY_REQUESTS;
+        StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(MessagingException.class)
+    public ResponseEntity<StandardError> rateLimit(MessagingException e, HttpServletRequest request) {
+        String error = "Error while sending email";
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<StandardError> entityNotFound(EntityNotFoundException e, HttpServletRequest request) {
+        String error = "Entity not found";
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<StandardError> invalidToken(InvalidTokenException e, HttpServletRequest request) {
+        String error = "Error during token validation";
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<StandardError> badRequest(BadRequestException e, HttpServletRequest request) {
+        String error = "Bad request";
+        HttpStatus status = HttpStatus.BAD_REQUEST;
         StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
         return ResponseEntity.status(status).body(err);
     }

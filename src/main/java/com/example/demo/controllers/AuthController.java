@@ -1,18 +1,24 @@
 package com.example.demo.controllers;
 
+import com.example.demo.controllers.exceptions.BadRequestException;
+import com.example.demo.controllers.exceptions.InvalidTokenException;
 import com.example.demo.controllers.exceptions.RateLimitException;
 import com.example.demo.dtos.ChangePasswordDTO;
 import com.example.demo.dtos.LoginDTO;
 import com.example.demo.dtos.RegisterDTO;
+import com.example.demo.entities.User;
 import com.example.demo.exceptions.StandardError;
 import com.example.demo.services.AuthenticationService;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
+import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.InvalidCsrfTokenException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/auth")
@@ -32,7 +39,7 @@ public class AuthController {
 
     private final StandardError limitError = new StandardError(Instant.now(), HttpStatus.TOO_MANY_REQUESTS.value(), "Too Many Requests", "You have exhausted your API Request Quota");
 
-    public AuthController(){
+    public AuthController() {
         Bandwidth limit = Bandwidth.classic(10, Refill.greedy(10, Duration.ofMinutes(1)));
         this.bucket = Bucket.builder()
                 .addLimit(limit)
@@ -41,7 +48,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterDTO register) {
-        if(bucket.tryConsume(1)){
+        if (bucket.tryConsume(1)) {
             return ResponseEntity.ok().body(authenticationService.register(register));
         }
         throw new RateLimitException();
@@ -49,7 +56,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@Valid @RequestBody LoginDTO login) {
-        if(bucket.tryConsume(1)){
+        if (bucket.tryConsume(1)) {
             return ResponseEntity.ok().body(authenticationService.login(login));
         }
         throw new RateLimitException();
@@ -57,11 +64,59 @@ public class AuthController {
 
     @PostMapping("/change-password")
     public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordDTO changePasswordDTO) {
-        if(bucket.tryConsume(1)){
+        if (bucket.tryConsume(1)) {
             authenticationService.changePassword(changePasswordDTO);
             String message = "Password updated successfully!";
             return ResponseEntity.ok().body(message);
         }
         throw new RateLimitException();
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(HttpServletRequest request) throws MessagingException {
+        String email = request.getParameter("email");
+
+        if(email == null){
+            throw new BadRequestException("email");
+        }
+
+        UUID token = UUID.randomUUID();
+
+        authenticationService.updateResetPasswordToken(token, email);
+        String resetPasswordLink = authenticationService.getSiteURL(request) + "/reset_password?token=" + token;
+        authenticationService.sendEmail(email, resetPasswordLink);
+
+        return ResponseEntity.ok().body("We have sent a reset password link to your email. Please check.");
+
+    }
+
+    @PostMapping("reset-password")
+    public ResponseEntity<String> resetPassword(HttpServletRequest request) throws Exception {
+        String password = request.getParameter("password");
+        String tokenString = request.getParameter("token");
+
+        if(password == null && tokenString == null){
+            throw new BadRequestException("password, token");
+        }
+        if(password == null){
+            throw new BadRequestException("password");
+        }
+        if(tokenString == null){
+            throw new BadRequestException("token");
+        }
+
+        UUID token = UUID.fromString(tokenString);
+
+        User user = authenticationService.getByResetPasswordToken(token);
+
+        if (user == null) {
+            throw new InvalidTokenException();
+        }
+
+        authenticationService.changePasswordByUser(user, password);
+
+        return ResponseEntity.ok().body("You have successfully changed your password.");
+    }
+
+
 }

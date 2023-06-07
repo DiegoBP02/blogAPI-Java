@@ -8,6 +8,10 @@ import com.example.demo.entities.enums.Role;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.exceptions.DuplicateKeyException;
 import com.example.demo.services.exceptions.InvalidOldPasswordException;
+import com.example.demo.services.exceptions.ResourceNotFoundException;
+import jakarta.mail.MessagingException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -21,8 +25,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.UnsupportedEncodingException;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class AuthenticationService implements UserDetailsService {
@@ -46,10 +53,13 @@ public class AuthenticationService implements UserDetailsService {
 
     private static final long LOCK_TIME_DURATION = 5 * 60 * 1000; // 5 minutes
 
+    @Autowired
+    private EmailSenderService senderService;
+
     @Override
     public UserDetails loadUserByUsername(String username) {
         User user = userRepository.findByUsername(username);
-        if(user == null){
+        if (user == null) {
             throw new UsernameNotFoundException("Username not found: " + username);
         }
         return user;
@@ -69,23 +79,24 @@ public class AuthenticationService implements UserDetailsService {
     }
 
     public String login(LoginDTO login) {
-            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                    new UsernamePasswordAuthenticationToken(login.getUsername(), login.getPassword());
+        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                new UsernamePasswordAuthenticationToken(login.getUsername(), login.getPassword());
 
-            Authentication authenticate = this.authenticationManager
-                    .authenticate(usernamePasswordAuthenticationToken);
+        Authentication authenticate = this.authenticationManager
+                .authenticate(usernamePasswordAuthenticationToken);
 
-            var user = (User) authenticate.getPrincipal();
+        var user = (User) authenticate.getPrincipal();
 
-            return tokenService.generateToken(user);
+        return tokenService.generateToken(user);
     }
 
     public void changePassword(ChangePasswordDTO changePasswordDTO) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        if(!passwordService.isPasswordMatch(user, changePasswordDTO.getOldPassword())) {
+        if (!passwordService.isPasswordMatch(user, changePasswordDTO.getOldPassword())) {
             throw new InvalidOldPasswordException("Incorrect password. Please make sure the password is correct.");
-        };
+        }
+        ;
 
         passwordService.changePassword(user, changePasswordDTO.getNewPassword());
     }
@@ -125,5 +136,46 @@ public class AuthenticationService implements UserDetailsService {
 
     public User getByUsername(String username) {
         return userRepository.findByUsername(username);
+    }
+
+    public void updateResetPasswordToken(UUID token, String email) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new EntityNotFoundException("Could not find any user with the email " + email);
+        }
+        user.setResetPasswordToken(token);
+        userRepository.save(user);
+    }
+
+    public User getByResetPasswordToken(UUID token) {
+        return userRepository.findByResetPasswordToken(token);
+    }
+
+    public void changePasswordByUser(User user, String newPassword) {
+        String encodedPassword = passwordService.hashPassword(newPassword);
+        user.setPassword(encodedPassword);
+
+        user.setResetPasswordToken(null);
+        userRepository.save(user);
+    }
+
+    public void sendEmail(String recipientEmail, String link) throws MessagingException {
+        String subject = "Here's the link to reset your password";
+
+        String content = "<p>Hello,</p>"
+                + "<p>You have requested to reset your password.</p>"
+                + "<p>Click the link below to change your password:</p>"
+                + "<p><a href=\"" + link + "\">Change my password</a></p>"
+                + "<br>"
+                + "<p>Ignore this email if you do remember your password, "
+                + "or you have not made the request.</p>";
+
+        senderService.sendEmail(recipientEmail,
+                subject, content);
+    }
+
+    public String getSiteURL(HttpServletRequest request) {
+        String siteURL = request.getRequestURL().toString();
+        return siteURL.replace(request.getServletPath(), "");
     }
 }

@@ -173,7 +173,7 @@ class PostServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should throw ResourceNotFoundException if no post is found")
     void findByIdNotFound() {
-        when(postRepository.findById(any(UUID.class))).thenThrow(ResourceNotFoundException.class);
+        when(postRepository.findById(any(UUID.class))).thenThrow(new ResourceNotFoundException(anyString()));
 
         assertThrows(ResourceNotFoundException.class, () -> postService.findById(UUID.randomUUID()));
 
