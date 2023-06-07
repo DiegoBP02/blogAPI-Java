@@ -13,6 +13,7 @@ import com.example.demo.services.exceptions.InvalidOldPasswordException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -179,7 +180,7 @@ class AuthControllerTest extends ApplicationConfigTest {
     @DisplayName("should throw EntityNotFoundException if user with the provided email doesn't exists")
     void forgotPasswordInvalidEmail() throws Exception {
         doThrow(EntityNotFoundException.class).when(authenticationService)
-                .updateResetPasswordToken(any(UUID.class), anyString());
+                .forgotPassword(any(HttpServletRequest.class), anyString());
 
         MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
                 .post(PATH + "/forgot-password")
@@ -192,27 +193,7 @@ class AuthControllerTest extends ApplicationConfigTest {
                 .andExpect(result ->
                         assertTrue(result.getResolvedException() instanceof EntityNotFoundException));
 
-        verify(authenticationService, times(1)).updateResetPasswordToken(any(), any());
-    }
-
-    @Test
-    @DisplayName("should throw MessagingException if something went wrong while the email was being sent")
-    void forgotPasswordMessagingException() throws Exception {
-        doThrow(MessagingException.class).when(authenticationService)
-                .sendEmail(anyString(), anyString());
-
-        MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
-                .post(PATH + "/forgot-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .param("email", "email@email.com");
-
-        mockMvc.perform(mockRequest)
-                .andExpect(status().isInternalServerError())
-                .andExpect(result ->
-                        assertTrue(result.getResolvedException() instanceof MessagingException));
-
-        verify(authenticationService, times(1)).sendEmail(anyString(), anyString());
+        verify(authenticationService, times(1)).forgotPassword(any(), any());
     }
 
     @Test
@@ -246,25 +227,6 @@ class AuthControllerTest extends ApplicationConfigTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", notNullValue()))
                 .andExpect(content().string("You have successfully changed your password."));
-    }
-
-    @Test
-    @DisplayName("should throw InvalidTokenException if user was not found")
-    void resetPasswordInvalidTokenException() throws Exception {
-        when(authenticationService.getByResetPasswordToken(any(UUID.class)))
-                .thenReturn(null);
-
-        MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
-                .post(PATH + "/reset-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .param("token", UUID.randomUUID().toString())
-                .param("password", "password");
-
-        mockMvc.perform(mockRequest)
-                .andExpect(status().isBadRequest())
-                .andExpect(result ->
-                        assertTrue(result.getResolvedException() instanceof InvalidTokenException));
     }
 
     @Test

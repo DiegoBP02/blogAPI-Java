@@ -73,21 +73,16 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(HttpServletRequest request) throws MessagingException {
+    public ResponseEntity<String> forgotPassword(HttpServletRequest request) {
         String email = request.getParameter("email");
 
         if(email == null){
             throw new BadRequestException("email");
         }
 
-        UUID token = UUID.randomUUID();
-
-        authenticationService.updateResetPasswordToken(token, email);
-        String resetPasswordLink = authenticationService.getSiteURL(request) + "/reset_password?token=" + token;
-        authenticationService.sendEmail(email, resetPasswordLink);
+        authenticationService.forgotPassword(request, email);
 
         return ResponseEntity.ok().body("We have sent a reset password link to your email. Please check.");
-
     }
 
     @PostMapping("reset-password")
@@ -105,15 +100,7 @@ public class AuthController {
             throw new BadRequestException("token");
         }
 
-        UUID token = UUID.fromString(tokenString);
-
-        User user = authenticationService.getByResetPasswordToken(token);
-
-        if (user == null) {
-            throw new InvalidTokenException();
-        }
-
-        authenticationService.changePasswordByUser(user, password);
+        authenticationService.resetPassword(tokenString, password);
 
         return ResponseEntity.ok().body("You have successfully changed your password.");
     }

@@ -1,5 +1,6 @@
 package com.example.demo.services;
 
+import com.example.demo.controllers.exceptions.InvalidTokenException;
 import com.example.demo.dtos.ChangePasswordDTO;
 import com.example.demo.dtos.LoginDTO;
 import com.example.demo.dtos.RegisterDTO;
@@ -138,6 +139,26 @@ public class AuthenticationService implements UserDetailsService {
         return userRepository.findByUsername(username);
     }
 
+    public void forgotPassword(HttpServletRequest request,String email){
+        UUID token = UUID.randomUUID();
+
+        updateResetPasswordToken(token, email);
+        String resetPasswordLink = getSiteURL(request) + "/reset_password?token=" + token;
+        sendEmail(email, resetPasswordLink);
+    }
+
+    public void resetPassword(String tokenString, String password){
+        UUID token = UUID.fromString(tokenString);
+
+        User user = getByResetPasswordToken(token);
+
+        if (user == null) {
+            throw new InvalidTokenException();
+        }
+
+        changePasswordByUser(user, password);
+    }
+
     public void updateResetPasswordToken(UUID token, String email) {
         User user = userRepository.findByEmail(email);
         if (user == null) {
@@ -159,7 +180,7 @@ public class AuthenticationService implements UserDetailsService {
         userRepository.save(user);
     }
 
-    public void sendEmail(String recipientEmail, String link) throws MessagingException {
+    public void sendEmail(String recipientEmail, String link) {
         String subject = "Here's the link to reset your password";
 
         String content = "<p>Hello,</p>"

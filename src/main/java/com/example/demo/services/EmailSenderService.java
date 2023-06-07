@@ -15,7 +15,7 @@ public class EmailSenderService {
 
     public void sendEmail(String toEmail,
                           String subject,
-                          String content) throws MessagingException {
+                          String content) {
         MimeMessage message = mailSender.createMimeMessage();
 
         try{
@@ -29,7 +29,11 @@ public class EmailSenderService {
             mailSender.send(message);
 
         } catch (MessagingException e){
-            throw new MessagingException("Failed to send email: " + e.getMessage());
+            try {
+                throw new MessagingException("Failed to send email: " + e.getMessage());
+            } catch (MessagingException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 }
