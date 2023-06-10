@@ -1,28 +1,21 @@
 package com.example.demo.controllers;
 
 import com.example.demo.controllers.exceptions.BadRequestException;
-import com.example.demo.controllers.exceptions.InvalidTokenException;
 import com.example.demo.controllers.exceptions.RateLimitException;
 import com.example.demo.dtos.ChangePasswordDTO;
 import com.example.demo.dtos.LoginDTO;
 import com.example.demo.dtos.RegisterDTO;
-import com.example.demo.entities.User;
 import com.example.demo.exceptions.StandardError;
 import com.example.demo.services.AuthenticationService;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
-import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.web.csrf.InvalidCsrfTokenException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -105,5 +98,11 @@ public class AuthController {
         return ResponseEntity.ok().body("You have successfully changed your password.");
     }
 
+    @GetMapping("confirm-account")
+    public ResponseEntity<String> confirmUserAccount(@RequestParam("token") String confirmationToken) {
+        String result = authenticationService.confirmEmail(UUID.fromString(confirmationToken));
+
+        return ResponseEntity.ok().body(result);
+    }
 
 }

@@ -2,7 +2,9 @@ package com.example.demo.config;
 
 import com.example.demo.entities.User;
 import com.example.demo.services.AuthenticationService;
+import com.example.demo.services.exceptions.UserNotEnabledException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
 @Component
 public class AuthenticationProvider implements org.springframework.security.authentication.AuthenticationProvider {
@@ -26,7 +29,10 @@ public class AuthenticationProvider implements org.springframework.security.auth
         User user = authenticationService.getByUsername(username);
 
         if (user != null) {
-            if ((passwordEncoder.matches(password, user.getPassword())&& user.isAccountNonLocked())) {
+            if (!user.isEnabled()) {
+                throw new UserNotEnabledException();
+            }
+            if ((passwordEncoder.matches(password, user.getPassword()) && user.isAccountNonLocked())) {
                 if (user.getFailedAttempt() > 0) {
                     authenticationService.resetFailedAttempts(user.getUsername());
                 }
@@ -44,12 +50,14 @@ public class AuthenticationProvider implements org.springframework.security.auth
                 } else if (!user.isAccountNonLocked()) {
                     if (authenticationService.unlockWhenTimeExpired(user)) {
                         throw new LockedException("Your account has been unlocked. Please try to login again.");
-                    } else{
+                    } else {
                         throw new LockedException("Your account has been locked due to 3 failed login attempts. " +
                                 "Please try again later.");
                     }
                 }
             }
+        } else {
+            throw new BadCredentialsException("Wrong password or username.");
         }
 
         return authentication;

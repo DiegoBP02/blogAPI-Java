@@ -4,12 +4,15 @@ import com.example.demo.ApplicationConfigTest;
 import com.example.demo.dtos.ChangePasswordDTO;
 import com.example.demo.dtos.LoginDTO;
 import com.example.demo.dtos.RegisterDTO;
+import com.example.demo.entities.ConfirmationToken;
 import com.example.demo.entities.Post;
 import com.example.demo.entities.User;
 import com.example.demo.entities.enums.Role;
+import com.example.demo.repositories.ConfirmationTokenRepository;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.exceptions.DuplicateKeyException;
 import com.example.demo.services.exceptions.InvalidOldPasswordException;
+import com.example.demo.services.exceptions.UserNotEnabledException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -25,7 +29,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
@@ -55,9 +62,13 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
     @MockBean
     private EmailSenderService senderService;
 
+    @MockBean
+    private ConfirmationTokenRepository confirmationTokenRepository;
+
     User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
     RegisterDTO REGISTER_DTO_RECORD = new RegisterDTO(USER_RECORD.getUsername(), USER_RECORD.getPassword(),USER_RECORD.getEmail());
     LoginDTO LOGIN_DTO_RECORD = new LoginDTO(USER_RECORD.getUsername(), USER_RECORD.getPassword());
+    ConfirmationToken CONFIRMATION_TOKEN_RECORD = new ConfirmationToken(USER_RECORD);
 
     @Test
     @DisplayName("should return an user")
@@ -87,22 +98,19 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
     }
 
     @Test
-    @DisplayName("should return a token")
+    @DisplayName("should return a string warning the user to confirm his email")
     void register() {
-        when(userRepository.save(any(User.class))).thenReturn(null);
-        when(tokenService.generateToken(any(User.class))).thenReturn("token");
-
         String result = authenticationService.register(REGISTER_DTO_RECORD);
 
         assertThat(result).isNotNull();
-        assertThat(result).isEqualTo("token");
+        assertThat(result).isEqualTo("Please confirm your email to complete registration!");
 
         verify(userRepository, times(1)).save(any(User.class));
-        verify(tokenService, times(1)).generateToken(any(User.class));
+        verify(confirmationTokenRepository, times(1)).save(any(ConfirmationToken.class));
     }
 
     @Test
-    @DisplayName("should throw DuplicateKeyException if user alredy exists")
+    @DisplayName("should throw DuplicateKeyException if user already exists")
     void registerDuplicateKeyException() {
         when(userRepository.save(any(User.class)))
                 .thenThrow(new DataIntegrityViolationException(anyString()));
@@ -117,6 +125,7 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should return a token")
     void login() {
+        ReflectionTestUtils.setField(USER_RECORD, "isEnabled", true);
         Authentication authenticate = mock(Authentication.class);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authenticate);
@@ -256,7 +265,7 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
     void sendEmail() throws Exception {
         doNothing().when(senderService).sendEmail(anyString(),anyString(),anyString());
 
-        authenticationService.sendEmail("","");
+        authenticationService.sendEmail("","","");
 
         verify(senderService, times(1)).sendEmail(anyString(),anyString(),anyString());
     }
@@ -276,5 +285,77 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
 
         verify(request,times(1)).getRequestURL();
         verify(request,times(1)).getServletPath();
+    }
+
+    @Test
+    @DisplayName("should return a string warning the user that his email was verified")
+    void confirmEmail(){
+        when(confirmationTokenRepository.findByConfirmationToken(any(UUID.class)))
+                .thenReturn(CONFIRMATION_TOKEN_RECORD);
+        when(userRepository.findByEmail(anyString())).thenReturn(USER_RECORD);
+
+        String result = authenticationService.confirmEmail(UUID.randomUUID());
+
+        assertThat(result).isNotNull();
+        assertEquals(result, "Email verified successfully");
+
+        verify(confirmationTokenRepository, times(1)).findByConfirmationToken(any(UUID.class));
+        verify(userRepository,times(1)).findByEmail(anyString());
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("should throw EntityNotFoundException if the token was not found")
+    void confirmEmailEntityNotFoundException(){
+        when(confirmationTokenRepository.findByConfirmationToken(any(UUID.class)))
+                .thenReturn(null);
+
+        assertThrows(EntityNotFoundException.class, () ->
+                authenticationService.confirmEmail(UUID.randomUUID()));
+
+        verify(confirmationTokenRepository, times(1)).findByConfirmationToken(any(UUID.class));
+        verify(userRepository,never()).findByEmail(anyString());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("should throw ResponseStatusException if the user is already enabled")
+    void confirmEmailUserAlreadyEnabled(){
+        ReflectionTestUtils.setField(USER_RECORD, "isEnabled", true);
+        when(confirmationTokenRepository.findByConfirmationToken(any(UUID.class)))
+                .thenReturn(CONFIRMATION_TOKEN_RECORD);
+        when(userRepository.findByEmail(anyString())).thenReturn(USER_RECORD);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
+                authenticationService.confirmEmail(UUID.randomUUID()));
+
+        String expectedMessage = "Email is already confirmed";
+        assertEquals(exception.getStatusCode(), HttpStatus.BAD_REQUEST);
+        assertEquals(exception.getReason(), expectedMessage);
+
+        verify(confirmationTokenRepository, times(1)).findByConfirmationToken(any(UUID.class));
+        verify(userRepository,times(1)).findByEmail(anyString());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("should throw ResponseStatusException if the token is expired")
+    void confirmEmailTokenExpired(){
+        ReflectionTestUtils.setField
+                (CONFIRMATION_TOKEN_RECORD, "expiryDate", Instant.now().minusSeconds(1));
+        when(confirmationTokenRepository.findByConfirmationToken(any(UUID.class)))
+                .thenReturn(CONFIRMATION_TOKEN_RECORD);
+        when(userRepository.findByEmail(anyString())).thenReturn(USER_RECORD);
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
+                authenticationService.confirmEmail(UUID.randomUUID()));
+
+        String expectedMessage = "The confirmation token has expired, please try again with a new token";
+        assertEquals(exception.getStatusCode(), HttpStatus.BAD_REQUEST);
+        assertEquals(exception.getReason(), expectedMessage);
+
+        verify(confirmationTokenRepository, times(1)).findByConfirmationToken(any(UUID.class));
+        verify(userRepository,times(1)).findByEmail(anyString());
+        verify(userRepository, never()).save(any(User.class));
     }
 }

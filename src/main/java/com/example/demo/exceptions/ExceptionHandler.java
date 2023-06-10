@@ -14,6 +14,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -76,7 +77,7 @@ public class ExceptionHandler {
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(DuplicateKeyException.class)
-    public ResponseEntity<StandardError> tokenError(DuplicateKeyException e, HttpServletRequest request) {
+    public ResponseEntity<StandardError> duplicateKey(DuplicateKeyException e, HttpServletRequest request) {
         String error = "Duplicate key violates unique constraint";
         HttpStatus status = HttpStatus.BAD_REQUEST;
         StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
@@ -136,6 +137,22 @@ public class ExceptionHandler {
         String error = "Bad request";
         HttpStatus status = HttpStatus.BAD_REQUEST;
         StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(UserNotEnabledException.class)
+    public ResponseEntity<StandardError> userNotEnabled(UserNotEnabledException e, HttpServletRequest request) {
+        String error = "User not enabled";
+        HttpStatus status = HttpStatus.FORBIDDEN;
+        StandardError err = new StandardError(Instant.now(), status.value(), error, e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<StandardError> responseStatusException(ResponseStatusException e, HttpServletRequest request) {
+        String error = "Something went wrong";
+        int status = e.getStatusCode().value();
+        StandardError err = new StandardError(Instant.now(), status, error, e.getReason(), request.getRequestURI());
         return ResponseEntity.status(status).body(err);
     }
 }

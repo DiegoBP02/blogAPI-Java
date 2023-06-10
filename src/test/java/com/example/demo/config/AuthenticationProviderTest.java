@@ -4,6 +4,8 @@ import com.example.demo.ApplicationConfigTest;
 import com.example.demo.entities.User;
 import com.example.demo.entities.enums.Role;
 import com.example.demo.services.AuthenticationService;
+import com.example.demo.services.exceptions.UserNotEnabledException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +15,10 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,19 +35,25 @@ class AuthenticationProviderTest extends ApplicationConfigTest {
     @Autowired
     private AuthenticationProvider authenticationProvider;
 
+    User USER_RECORD = new User("username", "email@email.com", "password", Role.ROLE_USER);
+
+    @BeforeEach
+    void setup(){
+        ReflectionTestUtils.setField(USER_RECORD, "isEnabled", true);
+    }
+
     @Test
     @DisplayName("should return UsernamePasswordAuthenticationToken if credentials are valid")
     void validCredentials() {
-        User user = new User("a", "b", "b", Role.ROLE_USER);
 
-        when(authenticationService.getByUsername(anyString())).thenReturn(user);
+        when(authenticationService.getByUsername(anyString())).thenReturn(USER_RECORD);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(USER_RECORD.getUsername(), USER_RECORD.getPassword());
 
         Authentication result = authenticationProvider.authenticate(authentication);
 
-        assertEquals(user, result.getPrincipal());
+        assertEquals(USER_RECORD, result.getPrincipal());
 
         verify(authenticationService, times(1)).getByUsername(anyString());
         verify(passwordEncoder, times(1)).matches(anyString(), anyString());
@@ -53,21 +63,20 @@ class AuthenticationProviderTest extends ApplicationConfigTest {
     @DisplayName("should return UsernamePasswordAuthenticationToken and reset user " +
             "attempts if credentials are valid and user has more than one login attempt")
     void validCredentialsResetAttempts() {
-        User user = new User("a", "b", "b", Role.ROLE_USER);
-        user.setFailedAttempt(1);
+        USER_RECORD.setFailedAttempt(1);
 
-        when(authenticationService.getByUsername(anyString())).thenReturn(user);
+        when(authenticationService.getByUsername(anyString())).thenReturn(USER_RECORD);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         doAnswer(invocation -> {
-            user.setFailedAttempt(0);
+            USER_RECORD.setFailedAttempt(0);
             return null;
         }).when(authenticationService).resetFailedAttempts(anyString());
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(USER_RECORD.getUsername(), USER_RECORD.getPassword());
 
         Authentication result = authenticationProvider.authenticate(authentication);
 
-        assertEquals(user, result.getPrincipal());
+        assertEquals(USER_RECORD, result.getPrincipal());
         assertThat(((User) result.getPrincipal()).getFailedAttempt()).isEqualTo(0);
 
         verify(authenticationService, times(1)).getByUsername(anyString());
@@ -78,20 +87,18 @@ class AuthenticationProviderTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should return BadCredentialsException and increase failed attempts if credentials are invalid")
     void invalidLogin() {
-        User user = new User("a", "b", "b", Role.ROLE_USER);
-
-        when(authenticationService.getByUsername(anyString())).thenReturn(user);
+        when(authenticationService.getByUsername(anyString())).thenReturn(USER_RECORD);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
         doAnswer(invocation -> {
-            user.setFailedAttempt(user.getFailedAttempt() + 1);
+            USER_RECORD.setFailedAttempt(USER_RECORD.getFailedAttempt() + 1);
             return null;
         }).when(authenticationService).increaseFailedAttempts(any(User.class));
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), "wrongPassword");
+        Authentication authentication = new UsernamePasswordAuthenticationToken(USER_RECORD.getUsername(), "wrongPassword");
 
         BadCredentialsException exception = assertThrows(BadCredentialsException.class, () -> authenticationProvider.authenticate(authentication));
         assertThat(exception.getMessage()).isEqualTo("Wrong password or username.");
-        assertEquals(user.getFailedAttempt(), 1);
+        assertEquals(USER_RECORD.getFailedAttempt(), 1);
 
         verify(authenticationService, times(1)).getByUsername(anyString());
         verify(authenticationService, times(1)).increaseFailedAttempts(any(User.class));
@@ -102,25 +109,24 @@ class AuthenticationProviderTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should lock the user account after 3 failed login attempts")
     void invalidLoginLockAccount() {
-        User user = new User("a", "b", "b", Role.ROLE_USER);
-        user.setFailedAttempt(2);
+        USER_RECORD.setFailedAttempt(2);
         Date newDate = new Date();
 
-        when(authenticationService.getByUsername(anyString())).thenReturn(user);
+        when(authenticationService.getByUsername(anyString())).thenReturn(USER_RECORD);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
         doAnswer(invocation -> {
-            user.setAccountNonLocked(false);
-            user.setLockTime(newDate);
+            USER_RECORD.setAccountNonLocked(false);
+            USER_RECORD.setLockTime(newDate);
             return null;
         }).when(authenticationService).lock(any(User.class));
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), "wrongPassword");
+        Authentication authentication = new UsernamePasswordAuthenticationToken(USER_RECORD.getUsername(), "wrongPassword");
 
         LockedException exception = assertThrows(LockedException.class, () -> authenticationProvider.authenticate(authentication));
         assertThat(exception.getMessage()).isEqualTo("Your account has been locked due to 3 failed login attempts."
                         + " It will be unlocked after 24 hours.");
-        assertFalse(user.isAccountNonLocked());
-        assertEquals(user.getLockTime(), newDate);
+        assertFalse(USER_RECORD.isAccountNonLocked());
+        assertEquals(USER_RECORD.getLockTime(), newDate);
 
         verify(authenticationService, times(1)).getByUsername(anyString());
         verify(passwordEncoder, times(1)).matches(anyString(), anyString());
@@ -130,21 +136,20 @@ class AuthenticationProviderTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should throw LockedException to warn the user that his account has been unlocked")
     void unlockWarning() {
-        User user = new User("a", "b", "b", Role.ROLE_USER);
-        user.setAccountNonLocked(false);
+        USER_RECORD.setAccountNonLocked(false);
 
-        when(authenticationService.getByUsername(anyString())).thenReturn(user);
+        when(authenticationService.getByUsername(anyString())).thenReturn(USER_RECORD);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
         doAnswer(invocation -> {
-            user.setAccountNonLocked(true);
+            USER_RECORD.setAccountNonLocked(true);
             return true;
         }).when(authenticationService).unlockWhenTimeExpired(any(User.class));
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), "wrongPassword");
+        Authentication authentication = new UsernamePasswordAuthenticationToken(USER_RECORD.getUsername(), "wrongPassword");
 
         LockedException exception = assertThrows(LockedException.class, () -> authenticationProvider.authenticate(authentication));
         assertThat(exception.getMessage()).isEqualTo("Your account has been unlocked. Please try to login again.");
-        assertTrue(user.isAccountNonLocked());
+        assertTrue(USER_RECORD.isAccountNonLocked());
 
         verify(authenticationService, times(1)).getByUsername(anyString());
         verify(passwordEncoder, times(1)).matches(anyString(), anyString());
@@ -154,14 +159,13 @@ class AuthenticationProviderTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should throw LockedException if he tries to login while the account is locked")
     void lockedWarning() {
-        User user = new User("a", "b", "b", Role.ROLE_USER);
-        user.setAccountNonLocked(false);
+        USER_RECORD.setAccountNonLocked(false);
 
-        when(authenticationService.getByUsername(anyString())).thenReturn(user);
+        when(authenticationService.getByUsername(anyString())).thenReturn(USER_RECORD);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
         when(authenticationService.unlockWhenTimeExpired(any(User.class))).thenReturn(false);
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), "wrongPassword");
+        Authentication authentication = new UsernamePasswordAuthenticationToken(USER_RECORD.getUsername(), "wrongPassword");
 
         LockedException exception = assertThrows(LockedException.class, () -> authenticationProvider.authenticate(authentication));
 
@@ -171,5 +175,24 @@ class AuthenticationProviderTest extends ApplicationConfigTest {
         verify(authenticationService, times(1)).getByUsername(anyString());
         verify(passwordEncoder, times(1)).matches(anyString(), anyString());
         verify(authenticationService, times(1)).unlockWhenTimeExpired(any(User.class));
+    }
+
+    @Test
+    @DisplayName("should throw UserNotEnabledException if the user is not enabled")
+    void userNotEnabled() {
+        USER_RECORD.setEnabled(false);
+
+        when(authenticationService.getByUsername(anyString())).thenReturn(USER_RECORD);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(USER_RECORD.getUsername(), USER_RECORD.getPassword());
+
+        UserNotEnabledException exception = assertThrows(UserNotEnabledException.class,
+                () -> authenticationProvider.authenticate(authentication));
+
+        assertThat(exception.getMessage()).isEqualTo("User is not enabled, please verify your email first");
+
+        verify(authenticationService, times(1)).getByUsername(anyString());
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
+        verify(authenticationService, never()).unlockWhenTimeExpired(any(User.class));
     }
 }

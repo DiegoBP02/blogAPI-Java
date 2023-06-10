@@ -39,6 +39,8 @@ public class Configurations {
                 .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register",
                         "/auth/forgot-password", "/auth/reset-password")
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/auth/confirm-account")
+                .permitAll()
                 .anyRequest().authenticated()
                 .and().addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling()

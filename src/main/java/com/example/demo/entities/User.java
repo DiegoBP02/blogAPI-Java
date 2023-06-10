@@ -34,6 +34,7 @@ public class User implements UserDetails {
     private Date lockTime;
     @Column(name = "reset_password_token")
     private UUID resetPasswordToken;
+    private boolean isEnabled;
 
     @JsonIgnore
     @OneToMany(mappedBy = "author")
@@ -90,7 +91,11 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return isEnabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        isEnabled = enabled;
     }
 
     public void setPassword(String password) {

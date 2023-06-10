@@ -18,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -25,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -55,7 +57,8 @@ class AuthControllerTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should register a user")
     void register() throws Exception {
-        when(authenticationService.register(any(RegisterDTO.class))).thenReturn("token");
+        String expectedString = "Please confirm your email to complete registration!";
+        when(authenticationService.register(any(RegisterDTO.class))).thenReturn(expectedString);
 
         MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
                 .post(PATH + "/register")
@@ -66,7 +69,7 @@ class AuthControllerTest extends ApplicationConfigTest {
         mockMvc.perform(mockRequest)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", notNullValue()))
-                .andExpect(content().string("token"));
+                .andExpect(content().string(expectedString));
 
         verify(authenticationService, times(1)).register(any(RegisterDTO.class));
     }
@@ -271,6 +274,95 @@ class AuthControllerTest extends ApplicationConfigTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(result ->
                         assertTrue(result.getResolvedException() instanceof BadRequestException));
+    }
+
+    @Test
+    @DisplayName("should return a string warning the user that his email was verified")
+    void confirmUserAccount() throws Exception {
+        String expectedResult = "Email verified successfully";
+        when(authenticationService.confirmEmail(any(UUID.class))).thenReturn(expectedResult);
+        MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
+                .get(PATH + "/confirm-account")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .param("token", UUID.randomUUID().toString());
+
+        mockMvc.perform(mockRequest)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", notNullValue()))
+                .andExpect(content().string(expectedResult));
+
+        verify(authenticationService, times(1)).confirmEmail(any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("should throw EntityNotFoundException if the token was not found")
+    void confirmEmailEntityNotFoundException() throws Exception {
+        when(authenticationService.confirmEmail(any(UUID.class)))
+                .thenThrow(EntityNotFoundException.class);
+
+        MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
+                .get(PATH + "/confirm-account")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .param("token", UUID.randomUUID().toString());
+
+        mockMvc.perform(mockRequest)
+                .andExpect(status().isNotFound())
+                .andExpect(result ->
+                        assertTrue(result.getResolvedException() instanceof EntityNotFoundException));
+
+        verify(authenticationService, times(1)).confirmEmail(any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("should throw ResponseStatusException if the user is already enabled")
+    void confirmEmailUserAlreadyEnabled() throws Exception {
+        String exceptionMessage = "Email is already confirmed";
+        when(authenticationService.confirmEmail(any(UUID.class)))
+                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST,exceptionMessage));
+
+        MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
+                .get(PATH + "/confirm-account")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .param("token", UUID.randomUUID().toString());
+
+        mockMvc.perform(mockRequest)
+                .andExpect(status().isBadRequest())
+                .andExpect(result ->
+                        assertTrue(result.getResolvedException() instanceof ResponseStatusException))
+                .andExpect(result -> {
+                    String responseBody = result.getResponse().getContentAsString();
+                    assertTrue(responseBody.contains(exceptionMessage));
+                });
+
+        verify(authenticationService, times(1)).confirmEmail(any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("should throw ResponseStatusException if the token is expired")
+    void confirmEmailTokenExpired() throws Exception {
+        String exceptionMessage = "The confirmation token has expired, please try again with a new token";
+        when(authenticationService.confirmEmail(any(UUID.class)))
+                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST,exceptionMessage));
+
+        MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
+                .get(PATH + "/confirm-account")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .param("token", UUID.randomUUID().toString());
+
+        mockMvc.perform(mockRequest)
+                .andExpect(status().isBadRequest())
+                .andExpect(result ->
+                        assertTrue(result.getResolvedException() instanceof ResponseStatusException))
+                .andExpect(result -> {
+                    String responseBody = result.getResponse().getContentAsString();
+                    assertTrue(responseBody.contains(exceptionMessage));
+                });
+
+        verify(authenticationService, times(1)).confirmEmail(any(UUID.class));
     }
 
 }
