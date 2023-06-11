@@ -1,7 +1,6 @@
 package com.example.demo.exceptions;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.example.demo.services.exceptions.ResourceNotFoundException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,7 +22,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
                          org.springframework.security.core.AuthenticationException authException) throws IOException, ServletException {
         try {
             Object expired = request.getAttribute("tokenExpired");
-            if(expired != null ){
+            if (expired != null) {
                 handlerExceptionResolver.resolveException(request, response, null, new TokenExpiredException(expired.toString(), Instant.now()));
                 return;
             }

@@ -5,14 +5,12 @@ import com.example.demo.dtos.ChangePasswordDTO;
 import com.example.demo.dtos.LoginDTO;
 import com.example.demo.dtos.RegisterDTO;
 import com.example.demo.entities.ConfirmationToken;
-import com.example.demo.entities.Post;
 import com.example.demo.entities.User;
 import com.example.demo.entities.enums.Role;
 import com.example.demo.repositories.ConfirmationTokenRepository;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.exceptions.DuplicateKeyException;
 import com.example.demo.services.exceptions.InvalidOldPasswordException;
-import com.example.demo.services.exceptions.UserNotEnabledException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -35,40 +33,32 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class AuthenticationServiceTest extends ApplicationConfigTest {
 
-    @Autowired
-    private AuthenticationService authenticationService;
-
-    @MockBean
-    private AuthenticationManager authenticationManager;
-
-    @MockBean
-    private TokenService tokenService;
-
-    @MockBean
-    private UserRepository userRepository;
-
-    @MockBean
-    private PasswordEncoder passwordEncoder;
-
-    @MockBean
-    private PasswordService passwordService;
-
-    @MockBean
-    private EmailSenderService senderService;
-
-    @MockBean
-    private ConfirmationTokenRepository confirmationTokenRepository;
-
     User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
-    RegisterDTO REGISTER_DTO_RECORD = new RegisterDTO(USER_RECORD.getUsername(), USER_RECORD.getPassword(),USER_RECORD.getEmail());
+    RegisterDTO REGISTER_DTO_RECORD = new RegisterDTO(USER_RECORD.getUsername(), USER_RECORD.getPassword(), USER_RECORD.getEmail());
     LoginDTO LOGIN_DTO_RECORD = new LoginDTO(USER_RECORD.getUsername(), USER_RECORD.getPassword());
     ConfirmationToken CONFIRMATION_TOKEN_RECORD = new ConfirmationToken(USER_RECORD);
+    @Autowired
+    private AuthenticationService authenticationService;
+    @MockBean
+    private AuthenticationManager authenticationManager;
+    @MockBean
+    private TokenService tokenService;
+    @MockBean
+    private UserRepository userRepository;
+    @MockBean
+    private PasswordEncoder passwordEncoder;
+    @MockBean
+    private PasswordService passwordService;
+    @MockBean
+    private EmailSenderService senderService;
+    @MockBean
+    private ConfirmationTokenRepository confirmationTokenRepository;
 
     @Test
     @DisplayName("should return an user")
@@ -91,7 +81,7 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
         when(userRepository.findByUsername(anyString()))
                 .thenReturn(null);
 
-        assertThrows(UsernameNotFoundException.class,() ->
+        assertThrows(UsernameNotFoundException.class, () ->
                 authenticationService.loadUserByUsername(USER_RECORD.getUsername()));
 
         verify(userRepository, times(1)).findByUsername(anyString());
@@ -160,7 +150,7 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
             return null;
         }).when(passwordService).changePassword(any(User.class), anyString());
 
-        ChangePasswordDTO changePasswordDTO = new ChangePasswordDTO("oldPassword","newPassword");
+        ChangePasswordDTO changePasswordDTO = new ChangePasswordDTO("oldPassword", "newPassword");
 
         assertDoesNotThrow(() -> authenticationService.changePassword(changePasswordDTO));
 
@@ -183,7 +173,7 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
 
         when(passwordService.isPasswordMatch(any(User.class), anyString())).thenThrow(new InvalidOldPasswordException("InvalidOldPasswordException"));
 
-        ChangePasswordDTO changePasswordDTO = new ChangePasswordDTO("oldPassword","newPassword");
+        ChangePasswordDTO changePasswordDTO = new ChangePasswordDTO("oldPassword", "newPassword");
 
         assertThrows(InvalidOldPasswordException.class, () ->
                 authenticationService.changePassword(changePasswordDTO));
@@ -201,7 +191,7 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
 
         User result = authenticationService.getByUsername(anyString());
 
-        assertEquals(result,USER_RECORD);
+        assertEquals(result, USER_RECORD);
 
         verify(userRepository, times(1)).findByUsername(anyString());
     }
@@ -241,7 +231,7 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
 
         User result = authenticationService.getByResetPasswordToken(token);
 
-        assertEquals(result,USER_RECORD);
+        assertEquals(result, USER_RECORD);
 
         verify(userRepository, times(1)).findByResetPasswordToken(any(UUID.class));
     }
@@ -263,16 +253,16 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should invoke sendEmail from senderService")
     void sendEmail() throws Exception {
-        doNothing().when(senderService).sendEmail(anyString(),anyString(),anyString());
+        doNothing().when(senderService).sendEmail(anyString(), anyString(), anyString());
 
-        authenticationService.sendEmail("","","");
+        senderService.sendEmail("", "", "");
 
-        verify(senderService, times(1)).sendEmail(anyString(),anyString(),anyString());
+        verify(senderService, times(1)).sendEmail(anyString(), anyString(), anyString());
     }
 
     @Test
     @DisplayName("should return only the server url from the request url")
-    void getSiteURL(){
+    void getSiteURL() {
         String URL = "http://localhost:8080/auth/path";
 
         HttpServletRequest request = mock(HttpServletRequest.class);
@@ -281,17 +271,18 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
 
         String result = authenticationService.getSiteURL(request);
 
-        assertEquals(result,"http://localhost:8080/auth" );
+        assertEquals(result, "http://localhost:8080/auth");
 
-        verify(request,times(1)).getRequestURL();
-        verify(request,times(1)).getServletPath();
+        verify(request, times(1)).getRequestURL();
+        verify(request, times(1)).getServletPath();
     }
 
     @Test
     @DisplayName("should return a string warning the user that his email was verified")
-    void confirmEmail(){
+    void confirmEmail() {
         when(confirmationTokenRepository.findByConfirmationToken(any(UUID.class)))
                 .thenReturn(CONFIRMATION_TOKEN_RECORD);
+        ReflectionTestUtils.setField(CONFIRMATION_TOKEN_RECORD, "id", UUID.randomUUID());
         when(userRepository.findByEmail(anyString())).thenReturn(USER_RECORD);
 
         String result = authenticationService.confirmEmail(UUID.randomUUID());
@@ -299,28 +290,36 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
         assertThat(result).isNotNull();
         assertEquals(result, "Email verified successfully");
 
-        verify(confirmationTokenRepository, times(1)).findByConfirmationToken(any(UUID.class));
-        verify(userRepository,times(1)).findByEmail(anyString());
+        verify(confirmationTokenRepository, times(1))
+                .findByConfirmationToken(any(UUID.class));
+        verify(userRepository, times(1)).findByEmail(anyString());
+        verify(confirmationTokenRepository, never()).save(any(ConfirmationToken.class));
+        verify(senderService, never()).sendEmail(anyString(), anyString(), anyString());
         verify(userRepository, times(1)).save(any(User.class));
+        verify(confirmationTokenRepository, times(1)).deleteById(any(UUID.class));
     }
 
     @Test
     @DisplayName("should throw EntityNotFoundException if the token was not found")
-    void confirmEmailEntityNotFoundException(){
+    void confirmEmailEntityNotFoundException() {
         when(confirmationTokenRepository.findByConfirmationToken(any(UUID.class)))
                 .thenReturn(null);
 
         assertThrows(EntityNotFoundException.class, () ->
                 authenticationService.confirmEmail(UUID.randomUUID()));
 
-        verify(confirmationTokenRepository, times(1)).findByConfirmationToken(any(UUID.class));
-        verify(userRepository,never()).findByEmail(anyString());
+        verify(confirmationTokenRepository, times(1))
+                .findByConfirmationToken(any(UUID.class));
+        verify(userRepository, never()).findByEmail(anyString());
+        verify(confirmationTokenRepository, never()).save(any(ConfirmationToken.class));
+        verify(senderService, never()).sendEmail(anyString(), anyString(), anyString());
         verify(userRepository, never()).save(any(User.class));
+        verify(confirmationTokenRepository, never()).deleteById(any(UUID.class));
     }
 
     @Test
     @DisplayName("should throw ResponseStatusException if the user is already enabled")
-    void confirmEmailUserAlreadyEnabled(){
+    void confirmEmailUserAlreadyEnabled() {
         ReflectionTestUtils.setField(USER_RECORD, "isEnabled", true);
         when(confirmationTokenRepository.findByConfirmationToken(any(UUID.class)))
                 .thenReturn(CONFIRMATION_TOKEN_RECORD);
@@ -333,14 +332,18 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
         assertEquals(exception.getStatusCode(), HttpStatus.BAD_REQUEST);
         assertEquals(exception.getReason(), expectedMessage);
 
-        verify(confirmationTokenRepository, times(1)).findByConfirmationToken(any(UUID.class));
-        verify(userRepository,times(1)).findByEmail(anyString());
+        verify(confirmationTokenRepository, times(1))
+                .findByConfirmationToken(any(UUID.class));
+        verify(userRepository, times(1)).findByEmail(anyString());
+        verify(confirmationTokenRepository, never()).save(any(ConfirmationToken.class));
+        verify(senderService, never()).sendEmail(anyString(), anyString(), anyString());
         verify(userRepository, never()).save(any(User.class));
+        verify(confirmationTokenRepository, never()).deleteById(any(UUID.class));
     }
 
     @Test
-    @DisplayName("should throw ResponseStatusException if the token is expired")
-    void confirmEmailTokenExpired(){
+    @DisplayName("should throw ResponseStatusException if the token is expired and send a new token to user email")
+    void confirmEmailTokenExpired() {
         ReflectionTestUtils.setField
                 (CONFIRMATION_TOKEN_RECORD, "expiryDate", Instant.now().minusSeconds(1));
         when(confirmationTokenRepository.findByConfirmationToken(any(UUID.class)))
@@ -350,12 +353,18 @@ class AuthenticationServiceTest extends ApplicationConfigTest {
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
                 authenticationService.confirmEmail(UUID.randomUUID()));
 
-        String expectedMessage = "The confirmation token has expired, please try again with a new token";
+        String expectedMessage = "The confirmation token has expired, a new token has been sent to your email";
         assertEquals(exception.getStatusCode(), HttpStatus.BAD_REQUEST);
         assertEquals(exception.getReason(), expectedMessage);
 
-        verify(confirmationTokenRepository, times(1)).findByConfirmationToken(any(UUID.class));
-        verify(userRepository,times(1)).findByEmail(anyString());
+        verify(confirmationTokenRepository, times(1))
+                .findByConfirmationToken(any(UUID.class));
+        verify(userRepository, times(1)).findByEmail(anyString());
+        verify(confirmationTokenRepository, times(1)).save(any(ConfirmationToken.class));
+        verify(senderService, times(1))
+                .sendEmail(anyString(), anyString(), anyString());
         verify(userRepository, never()).save(any(User.class));
+        verify(confirmationTokenRepository, never()).deleteById(any(UUID.class));
     }
+
 }

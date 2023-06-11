@@ -23,7 +23,7 @@ public class TokenService {
                 ).sign(Algorithm.HMAC256("secret"));
     }
 
-    public String getSubject(String token){
+    public String getSubject(String token) {
         return JWT.require(Algorithm.HMAC256("secret"))
                 .build().verify(token).getSubject();
     }

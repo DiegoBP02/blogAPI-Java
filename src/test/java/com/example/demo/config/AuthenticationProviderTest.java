@@ -18,27 +18,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Date;
-import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class AuthenticationProviderTest extends ApplicationConfigTest {
 
+    User USER_RECORD = new User("username", "email@email.com", "password", Role.ROLE_USER);
     @MockBean
     private AuthenticationService authenticationService;
-
     @MockBean
     private PasswordEncoder passwordEncoder;
-
     @Autowired
     private AuthenticationProvider authenticationProvider;
 
-    User USER_RECORD = new User("username", "email@email.com", "password", Role.ROLE_USER);
-
     @BeforeEach
-    void setup(){
+    void setup() {
         ReflectionTestUtils.setField(USER_RECORD, "isEnabled", true);
     }
 
@@ -124,7 +120,7 @@ class AuthenticationProviderTest extends ApplicationConfigTest {
 
         LockedException exception = assertThrows(LockedException.class, () -> authenticationProvider.authenticate(authentication));
         assertThat(exception.getMessage()).isEqualTo("Your account has been locked due to 3 failed login attempts."
-                        + " It will be unlocked after 24 hours.");
+                + " It will be unlocked after 24 hours.");
         assertFalse(USER_RECORD.isAccountNonLocked());
         assertEquals(USER_RECORD.getLockTime(), newDate);
 

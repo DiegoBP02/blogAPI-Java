@@ -25,12 +25,10 @@ import java.util.UUID;
 @RequestMapping(value = "/auth")
 public class AuthController {
 
+    private final Bucket bucket;
+    private final StandardError limitError = new StandardError(Instant.now(), HttpStatus.TOO_MANY_REQUESTS.value(), "Too Many Requests", "You have exhausted your API Request Quota");
     @Autowired
     private AuthenticationService authenticationService;
-
-    private final Bucket bucket;
-
-    private final StandardError limitError = new StandardError(Instant.now(), HttpStatus.TOO_MANY_REQUESTS.value(), "Too Many Requests", "You have exhausted your API Request Quota");
 
     public AuthController() {
         Bandwidth limit = Bandwidth.classic(10, Refill.greedy(10, Duration.ofMinutes(1)));
@@ -69,7 +67,7 @@ public class AuthController {
     public ResponseEntity<String> forgotPassword(HttpServletRequest request) {
         String email = request.getParameter("email");
 
-        if(email == null){
+        if (email == null) {
             throw new BadRequestException("email");
         }
 
@@ -83,13 +81,13 @@ public class AuthController {
         String password = request.getParameter("password");
         String tokenString = request.getParameter("token");
 
-        if(password == null && tokenString == null){
+        if (password == null && tokenString == null) {
             throw new BadRequestException("password, token");
         }
-        if(password == null){
+        if (password == null) {
             throw new BadRequestException("password");
         }
-        if(tokenString == null){
+        if (tokenString == null) {
             throw new BadRequestException("token");
         }
 

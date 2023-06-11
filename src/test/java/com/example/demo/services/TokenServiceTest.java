@@ -15,9 +15,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.Date;
+import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 @DisplayName("TokenServiceTest")
 class TokenServiceTest extends ApplicationConfigTest {
@@ -41,7 +43,7 @@ class TokenServiceTest extends ApplicationConfigTest {
 
     @Test
     @DisplayName("should genretate a token with correct claim")
-    void createCorrectClaims(){
+    void createCorrectClaims() {
         String token = tokenService.generateToken(USER_RECORD);
 
         DecodedJWT decodedToken = JWT.decode(token);
@@ -52,7 +54,7 @@ class TokenServiceTest extends ApplicationConfigTest {
 
     @Test
     @DisplayName("should generate a token with correct expiration")
-    void createCorrectExpiration(){
+    void createCorrectExpiration() {
         String token = tokenService.generateToken(USER_RECORD);
 
         DecodedJWT decodedToken = JWT.decode(token);
@@ -68,7 +70,7 @@ class TokenServiceTest extends ApplicationConfigTest {
 
     @Test
     @DisplayName("should generate a token with correct signature")
-    void createCorrectSignature(){
+    void createCorrectSignature() {
         String token = tokenService.generateToken(USER_RECORD);
 
         Algorithm algorithm = Algorithm.HMAC256("secret");
@@ -78,7 +80,7 @@ class TokenServiceTest extends ApplicationConfigTest {
 
     @Test
     @DisplayName("should retrieve the subject from the token")
-    void getSubject(){
+    void getSubject() {
         String token = JWT.create()
                 .withSubject(USER_RECORD.getUsername())
                 .withClaim("id", USER_RECORD.getId().toString())

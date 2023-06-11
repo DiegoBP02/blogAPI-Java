@@ -12,7 +12,6 @@ import com.example.demo.services.exceptions.UnauthorizedAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.*;
@@ -23,29 +22,25 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @DisplayName("PostServiceTest")
 class PostServiceTest extends ApplicationConfigTest {
-    @MockBean
-    private PostRepository postRepository;
-
     @Autowired
     PostService postService;
-
     User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
     Set<PostCategory> CATEGORIES_RECORD = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
     PostDTO POST_DTO_RECORD = new PostDTO("title", "contentmusthaveatleast30characters", CATEGORIES_RECORD);
     Post POST_RECORD = new Post(POST_DTO_RECORD.getTitle(), POST_DTO_RECORD.getContent(), Instant.now(), CATEGORIES_RECORD, USER_RECORD);
     Post POST_RECORD_2 = new Post("z", POST_DTO_RECORD.getContent(), Instant.now().plusSeconds(1), CATEGORIES_RECORD, USER_RECORD);
     List<Post> POST_LIST_RECORD = Arrays.asList(POST_RECORD, POST_RECORD_2);
-    Pageable PAGING_RECORD = PageRequest.of(0, 5, Sort.by("title"));
     Page<Post> POSTS_RECORD = new PageImpl<>(POST_LIST_RECORD, PAGING_RECORD, 1);
-
+    Pageable PAGING_RECORD = PageRequest.of(0, 5, Sort.by("title"));
+    @MockBean
+    private PostRepository postRepository;
     private Authentication authentication;
     private SecurityContext securityContext;
 

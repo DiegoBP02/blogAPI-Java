@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -33,7 +32,8 @@ public class Comment {
     @JoinColumn(name = "user_id")
     private User author;
 
-    public Comment(){}
+    public Comment() {
+    }
 
     public Comment(String content, Instant publishDate, Post post, User author) {
         this.content = content;
@@ -94,7 +94,7 @@ public class Comment {
         return usersUpvotesId;
     }
 
-    public void increaseUpvote(UUID id){
+    public void increaseUpvote(UUID id) {
         this.usersUpvotesId.add(id);
         this.upvotes++;
     }

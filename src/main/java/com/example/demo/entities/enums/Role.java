@@ -6,20 +6,20 @@ public enum Role {
 
     private int code;
 
-    private Role(int code){
+    private Role(int code) {
         this.code = code;
     }
 
-    public int getCode() {
-        return code;
-    }
-
-    public static Role valueOf(int code){
-        for (Role value : Role.values()){
-            if(value.getCode() == code){
+    public static Role valueOf(int code) {
+        for (Role value : Role.values()) {
+            if (value.getCode() == code) {
                 return value;
             }
         }
         throw new IllegalArgumentException("Invalid role code");
+    }
+
+    public int getCode() {
+        return code;
     }
 }

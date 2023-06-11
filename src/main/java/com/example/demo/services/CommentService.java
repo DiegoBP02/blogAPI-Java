@@ -1,17 +1,14 @@
 package com.example.demo.services;
 
 import com.example.demo.dtos.CommentDTO;
-import com.example.demo.dtos.PostDTO;
 import com.example.demo.entities.Comment;
 import com.example.demo.entities.Post;
 import com.example.demo.entities.User;
 import com.example.demo.entities.enums.Role;
 import com.example.demo.repositories.CommentRepository;
-import com.example.demo.repositories.PostRepository;
 import com.example.demo.services.exceptions.DatabaseException;
 import com.example.demo.services.exceptions.ResourceNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -54,14 +51,14 @@ public class CommentService {
     }
 
     public Comment update(UUID id, Comment obj) {
-        try{
+        try {
             Comment entity = commentRepository.getReferenceById(id);
             User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             checkOwnership(user, entity.getAuthor().getId());
             updateData(entity, obj);
 
             return commentRepository.save(entity);
-        } catch(EntityNotFoundException e){
+        } catch (EntityNotFoundException e) {
             throw new ResourceNotFoundException(id);
         }
     }
@@ -77,14 +74,14 @@ public class CommentService {
             User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             String role = user.getAuthorities().stream().toList().get(0).getAuthority();
 
-            if(!role.equals(Role.ROLE_ADMIN.toString())) {
+            if (!role.equals(Role.ROLE_ADMIN.toString())) {
                 checkOwnership(user, entity.getAuthor().getId());
             }
 
             commentRepository.deleteById(id);
-        } catch(EmptyResultDataAccessException e){
+        } catch (EmptyResultDataAccessException e) {
             throw new ResourceNotFoundException(id);
-        } catch(DataIntegrityViolationException e){
+        } catch (DataIntegrityViolationException e) {
             throw new DatabaseException(e.getMessage());
         }
     }
@@ -93,7 +90,7 @@ public class CommentService {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         UUID userId = user.getId();
         Comment comment = this.findById(id);
-        if(comment.getUsersUpvotesId().contains(userId)){
+        if (comment.getUsersUpvotesId().contains(userId)) {
             return false;
         }
         comment.increaseUpvote(userId);

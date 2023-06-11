@@ -3,7 +3,6 @@ package com.example.demo.services;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,7 @@ public class EmailSenderService {
                           String content) {
         MimeMessage message = mailSender.createMimeMessage();
 
-        try{
+        try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
             helper.setFrom("diegobpcelular@gmail.com");
@@ -28,7 +27,7 @@ public class EmailSenderService {
 
             mailSender.send(message);
 
-        } catch (MessagingException e){
+        } catch (MessagingException e) {
             try {
                 throw new MessagingException("Failed to send email: " + e.getMessage());
             } catch (MessagingException ex) {

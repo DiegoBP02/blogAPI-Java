@@ -1,11 +1,8 @@
 package com.example.demo.entities;
 
 import com.example.demo.entities.enums.Role;
-import com.example.demo.services.PasswordService;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -65,6 +62,10 @@ public class User implements UserDetails {
         return password;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     @Override
     public String getUsername() {
         return username;
@@ -84,6 +85,10 @@ public class User implements UserDetails {
         return this.accountNonLocked;
     }
 
+    public void setAccountNonLocked(boolean accountNonLocked) {
+        this.accountNonLocked = accountNonLocked;
+    }
+
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
@@ -98,20 +103,12 @@ public class User implements UserDetails {
         isEnabled = enabled;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public int getFailedAttempt() {
         return failedAttempt;
     }
 
     public void setFailedAttempt(int failedAttempt) {
         this.failedAttempt = failedAttempt;
-    }
-
-    public void setAccountNonLocked(boolean accountNonLocked) {
-        this.accountNonLocked = accountNonLocked;
     }
 
     public Date getLockTime() {

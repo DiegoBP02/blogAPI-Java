@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -39,7 +38,7 @@ public class PostController {
             @RequestParam(defaultValue = "5") Integer pageSize,
             @RequestParam(defaultValue = "title") String sortBy
     ) {
-        Page<Post> posts = postService.findAll(pageNo,pageSize,sortBy);
+        Page<Post> posts = postService.findAll(pageNo, pageSize, sortBy);
         return ResponseEntity.ok().body(posts);
     }
 

@@ -26,32 +26,29 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.time.Instant;
 import java.util.*;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
-import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @DisplayName("CommentControllerTest")
 class CommentControllerTest extends ApplicationConfigTest {
-    @MockBean
-    private CommentService commentService;
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
     private static final String PATH = "/comments";
-
     User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
     Set<PostCategory> CATEGORIES_RECORD = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
     Post POST_RECORD = new Post("title", "contentmusthaveatleast30characters", Instant.now(), CATEGORIES_RECORD, USER_RECORD);
-    CommentDTO COMMENT_DTO_RECORD = new CommentDTO("content", UUID.randomUUID());
     Comment COMMENT_RECORD = new Comment(COMMENT_DTO_RECORD.getContent(), Instant.now(), POST_RECORD, USER_RECORD);
+    CommentDTO COMMENT_DTO_RECORD = new CommentDTO("content", UUID.randomUUID());
+    @MockBean
+    private CommentService commentService;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     @WithMockUser()

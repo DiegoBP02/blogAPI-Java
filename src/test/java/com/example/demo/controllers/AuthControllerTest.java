@@ -2,7 +2,6 @@ package com.example.demo.controllers;
 
 import com.example.demo.ApplicationConfigTest;
 import com.example.demo.controllers.exceptions.BadRequestException;
-import com.example.demo.controllers.exceptions.InvalidTokenException;
 import com.example.demo.dtos.ChangePasswordDTO;
 import com.example.demo.dtos.LoginDTO;
 import com.example.demo.dtos.RegisterDTO;
@@ -11,7 +10,6 @@ import com.example.demo.entities.enums.Role;
 import com.example.demo.services.AuthenticationService;
 import com.example.demo.services.exceptions.InvalidOldPasswordException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -31,7 +28,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -39,20 +36,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("AuthControllerTest")
 class AuthControllerTest extends ApplicationConfigTest {
 
-    @MockBean
-    private AuthenticationService authenticationService;
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
     private static final String PATH = "/auth";
-
     User USER_RECORD = new User("username", "email@email.com", "password", Role.ROLE_USER);
     RegisterDTO REGISTER_DTO_RECORD = new RegisterDTO(USER_RECORD.getUsername(), USER_RECORD.getPassword(), USER_RECORD.getEmail());
     LoginDTO LOGIN_DTO_RECORD = new LoginDTO(USER_RECORD.getUsername(), USER_RECORD.getPassword());
+    @MockBean
+    private AuthenticationService authenticationService;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     @DisplayName("should register a user")
@@ -320,7 +313,7 @@ class AuthControllerTest extends ApplicationConfigTest {
     void confirmEmailUserAlreadyEnabled() throws Exception {
         String exceptionMessage = "Email is already confirmed";
         when(authenticationService.confirmEmail(any(UUID.class)))
-                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST,exceptionMessage));
+                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, exceptionMessage));
 
         MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
                 .get(PATH + "/confirm-account")
@@ -345,7 +338,7 @@ class AuthControllerTest extends ApplicationConfigTest {
     void confirmEmailTokenExpired() throws Exception {
         String exceptionMessage = "The confirmation token has expired, please try again with a new token";
         when(authenticationService.confirmEmail(any(UUID.class)))
-                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST,exceptionMessage));
+                .thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, exceptionMessage));
 
         MockHttpServletRequestBuilder mockRequest = MockMvcRequestBuilders
                 .get(PATH + "/confirm-account")

@@ -1,6 +1,5 @@
 package com.example.demo.services;
 
-import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.example.demo.controllers.exceptions.InvalidTokenException;
 import com.example.demo.dtos.ChangePasswordDTO;
 import com.example.demo.dtos.LoginDTO;
@@ -12,9 +11,6 @@ import com.example.demo.repositories.ConfirmationTokenRepository;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.exceptions.DuplicateKeyException;
 import com.example.demo.services.exceptions.InvalidOldPasswordException;
-import com.example.demo.services.exceptions.ResourceNotFoundException;
-import com.example.demo.services.exceptions.UserNotEnabledException;
-import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -33,37 +28,27 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.UnsupportedEncodingException;
-import java.sql.SQLException;
+import java.time.Instant;
 import java.util.Date;
-import java.util.Objects;
 import java.util.UUID;
 
 @Service
 public class AuthenticationService implements UserDetailsService {
+    public static final int MAX_FAILED_ATTEMPTS = 3;
+    private static final long LOCK_TIME_DURATION = 5 * 60 * 1000; // 5 minutes
     @Lazy
     @Autowired
     private AuthenticationManager authenticationManager;
-
     @Autowired
     private TokenService tokenService;
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
-
     @Autowired
     private PasswordService passwordService;
-
     @Autowired
     private ConfirmationTokenRepository confirmationTokenRepository;
-
-    public static final int MAX_FAILED_ATTEMPTS = 3;
-
-    private static final long LOCK_TIME_DURATION = 5 * 60 * 1000; // 5 minutes
-
     @Autowired
     private EmailSenderService senderService;
 
@@ -86,12 +71,12 @@ public class AuthenticationService implements UserDetailsService {
             confirmationTokenRepository.save(confirmationToken);
 
             String subject = "Complete registration!";
+            String newTokenLink = "http://localhost:8080/auth/confirm-account?token=" + confirmationToken.getConfirmationToken();
+            String content = "<p>Hello,</p>"
+                    + "<p>To confirm your account, please click in the link below: </p>"
+                    + "<p><a href=\"" + newTokenLink + "\">Confirm my account</a></p>";
 
-            String content = "To confirm your account, please click here: "
-                    + "http://localhost:8080/auth/confirm-account?token=" +
-                    confirmationToken.getConfirmationToken();
-
-            sendEmail(user.getEmail(), subject, content);
+            senderService.sendEmail(user.getEmail(), subject, content);
 
             return "Please confirm your email to complete registration!";
         } catch (
@@ -177,7 +162,7 @@ public class AuthenticationService implements UserDetailsService {
                 + "<p>Ignore this email if you do remember your password, "
                 + "or you have not made the request.</p>";
 
-        sendEmail(email, subject, content);
+        senderService.sendEmail(email, subject, content);
     }
 
     public void resetPassword(String tokenString, String password) {
@@ -213,11 +198,6 @@ public class AuthenticationService implements UserDetailsService {
         userRepository.save(user);
     }
 
-    public void sendEmail(String recipientEmail, String subject, String content) {
-        senderService.sendEmail(recipientEmail,
-                subject, content);
-    }
-
     public String getSiteURL(HttpServletRequest request) {
         String siteURL = request.getRequestURL().toString();
         return siteURL.replace(request.getServletPath(), "");
@@ -235,14 +215,29 @@ public class AuthenticationService implements UserDetailsService {
         if (user.isEnabled()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already confirmed");
         }
+        if (token.isTokenExpired()) {
+            token.setConfirmationToken(UUID.randomUUID());
+            token.setCreatedDate(Instant.now());
+            token.setExpiryDate(token.getCreatedDate().plusSeconds(30 * 60));
+            confirmationTokenRepository.save(token);
+            String subject = "New confirmation token";
+            String newTokenLink = "http://localhost:8080/auth/confirm-account?token=" + token.getConfirmationToken();
+            String content = "<p>Hello,</p>"
+                    + "<p>Your previous confirmation token has expired.</p>"
+                    + "Here is a new confirmation token link: "
+                    + "<p><a href=\"" + newTokenLink + "\">Confirm my account</a></p>";
 
-        if(token.isTokenExpired()){
+            senderService.sendEmail(token.getUser().getEmail(), subject, content);
+
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "The confirmation token has expired, please try again with a new token");
+                    "The confirmation token has expired, a new token has been sent to your email");
         }
 
         user.setEnabled(true);
         userRepository.save(user);
+
+        confirmationTokenRepository.deleteById(token.getId());
+
         return "Email verified successfully";
     }
 }

@@ -25,33 +25,29 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.time.Instant;
 import java.util.*;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
-import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @DisplayName("PostControllerTest")
 class PostControllerTest extends ApplicationConfigTest {
 
-    @MockBean
-    private PostService postService;
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
     private static final String PATH = "/posts";
-
     Set<PostCategory> CATEGORIES_RECORD = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
     PostDTO POSTDTO_RECORD = new PostDTO("title", "contentmusthaveatleast30characters", CATEGORIES_RECORD);
-    User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
     Post POST_RECORD = new Post(POSTDTO_RECORD.getTitle(), POSTDTO_RECORD.getContent(), Instant.now(), CATEGORIES_RECORD, USER_RECORD);
-
+    User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
+    @MockBean
+    private PostService postService;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     @WithMockUser()
@@ -96,9 +92,9 @@ class PostControllerTest extends ApplicationConfigTest {
     @DisplayName("should return a list of posts")
     void findAll() throws Exception {
         List<Post> postList = Collections.singletonList(POST_RECORD);
-        Pageable paging = PageRequest.of(0,5,Sort.by("title"));
+        Pageable paging = PageRequest.of(0, 5, Sort.by("title"));
         Page<Post> posts = new PageImpl<>(postList, paging, 1);
-        when(postService.findAll(anyInt(),anyInt(),anyString())).thenReturn(posts);
+        when(postService.findAll(anyInt(), anyInt(), anyString())).thenReturn(posts);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .get(PATH)
@@ -107,7 +103,7 @@ class PostControllerTest extends ApplicationConfigTest {
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].title", is(POST_RECORD.getTitle())));
 
-            verify(postService, times(1)).findAll(anyInt(),anyInt(),anyString());
+        verify(postService, times(1)).findAll(anyInt(), anyInt(), anyString());
     }
 
     @Test
@@ -115,9 +111,9 @@ class PostControllerTest extends ApplicationConfigTest {
     @DisplayName("should return a list of posts with pagination information")
     void findAllPagination() throws Exception {
         List<Post> postList = Collections.singletonList(POST_RECORD);
-        Pageable paging = PageRequest.of(0,5,Sort.by("title"));
+        Pageable paging = PageRequest.of(0, 5, Sort.by("title"));
         Page<Post> posts = new PageImpl<>(postList, paging, 1);
-        when(postService.findAll(anyInt(),anyInt(),anyString())).thenReturn(posts);
+        when(postService.findAll(anyInt(), anyInt(), anyString())).thenReturn(posts);
 
         mockMvc.perform(MockMvcRequestBuilders
                         .get(PATH)
@@ -147,7 +143,7 @@ class PostControllerTest extends ApplicationConfigTest {
                 .andExpect(jsonPath("$.empty").value(false));
 
 
-        verify(postService, times(1)).findAll(anyInt(),anyInt(),anyString());
+        verify(postService, times(1)).findAll(anyInt(), anyInt(), anyString());
     }
 
     @Test
@@ -205,6 +201,7 @@ class PostControllerTest extends ApplicationConfigTest {
 
         verify(postService, times(1)).update(any(UUID.class), any(Post.class));
     }
+
     @Test
     @WithMockUser
     @DisplayName("should throw UnauthorizedAccessException for invalid checkOwnership")
@@ -252,8 +249,8 @@ class PostControllerTest extends ApplicationConfigTest {
                 .when(postService).delete(any(UUID.class));
 
         mockMvc.perform(MockMvcRequestBuilders
-                .delete(PATH + "/" + UUID.randomUUID().toString())
-                .contentType(MediaType.APPLICATION_JSON))
+                        .delete(PATH + "/" + UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
                 .andExpect(result ->
                         assertTrue(result.getResolvedException() instanceof UnauthorizedAccessException))
@@ -290,6 +287,7 @@ class PostControllerTest extends ApplicationConfigTest {
 
         verify(postService, times(1)).increaseUpvote(any(UUID.class));
     }
+
     @Test
     @WithMockUser
     @DisplayName("should return conflict if user already upvoted")

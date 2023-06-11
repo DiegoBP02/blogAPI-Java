@@ -12,20 +12,20 @@ public enum PostCategory {
 
     private int code;
 
-    private PostCategory(int code){
+    private PostCategory(int code) {
         this.code = code;
     }
 
-    public int getCode() {
-        return code;
-    }
-
-    public static PostCategory valueOf(int code){
-        for (PostCategory value : PostCategory.values()){
-            if(value.getCode() == code){
+    public static PostCategory valueOf(int code) {
+        for (PostCategory value : PostCategory.values()) {
+            if (value.getCode() == code) {
                 return value;
             }
         }
         throw new IllegalArgumentException("Invalid category code");
+    }
+
+    public int getCode() {
+        return code;
     }
 }

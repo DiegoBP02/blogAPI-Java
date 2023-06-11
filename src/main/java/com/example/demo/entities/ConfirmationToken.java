@@ -2,7 +2,7 @@ package com.example.demo.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -15,7 +15,7 @@ public class ConfirmationToken {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name="confirmation_token")
+    @Column(name = "confirmation_token")
     private UUID confirmationToken;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "GMT")
@@ -28,7 +28,8 @@ public class ConfirmationToken {
     @JoinColumn(nullable = false, name = "user_id")
     private User user;
 
-    public ConfirmationToken() {}
+    public ConfirmationToken() {
+    }
 
     public ConfirmationToken(User user) {
         this.user = user;
@@ -37,7 +38,7 @@ public class ConfirmationToken {
         this.expiryDate = createdDate.plusSeconds(30 * 60);
     }
 
-    public boolean isTokenExpired(){
+    public boolean isTokenExpired() {
         Instant currentTime = Instant.now();
         return currentTime.isAfter(expiryDate);
     }

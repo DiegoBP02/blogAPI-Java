@@ -23,27 +23,23 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Instant;
 import java.util.*;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @DisplayName("CommentServiceTest")
 class CommentServiceTest extends ApplicationConfigTest {
-    @MockBean
-    private CommentRepository commentRepository;
-
-    @MockBean
-    private PostService postService;
-
     @Autowired
     CommentService commentService;
-
     User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
     Set<PostCategory> CATEGORIES_RECORD = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
     Post POST_RECORD = new Post("title", "contentmusthaveatleast30characters", Instant.now(), CATEGORIES_RECORD, USER_RECORD);
-    CommentDTO COMMENT_DTO_RECORD = new CommentDTO("content", UUID.randomUUID());
     Comment COMMENT_RECORD = new Comment(COMMENT_DTO_RECORD.getContent(), Instant.now(), POST_RECORD, USER_RECORD);
-
+    CommentDTO COMMENT_DTO_RECORD = new CommentDTO("content", UUID.randomUUID());
+    @MockBean
+    private CommentRepository commentRepository;
+    @MockBean
+    private PostService postService;
     private Authentication authentication;
     private SecurityContext securityContext;
 
@@ -141,7 +137,7 @@ class CommentServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should throw UnauthorizedAccessException if checkOwnership is invalid")
     void updateUnauthorizedAccessException() {
-        User user2 = new User("x","y","z", Role.ROLE_USER);
+        User user2 = new User("x", "y", "z", Role.ROLE_USER);
         ReflectionTestUtils.setField(user2, "id", UUID.randomUUID());
 
         when(authentication.getPrincipal()).thenReturn(user2);
@@ -177,7 +173,7 @@ class CommentServiceTest extends ApplicationConfigTest {
     @Test
     @DisplayName("should throw UnauthorizedAccessException if checkOwnership is invalid")
     void deleteUnauthorizedAccessException() {
-        User user2 = new User("x","y","z", Role.ROLE_USER);
+        User user2 = new User("x", "y", "z", Role.ROLE_USER);
         ReflectionTestUtils.setField(user2, "id", UUID.randomUUID());
 
         when(authentication.getPrincipal()).thenReturn(user2);
