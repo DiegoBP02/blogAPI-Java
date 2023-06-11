@@ -1,0 +1,1 @@
+This repository contains a project developed using Spring Boot, with a focus on implementing Spring Security and writing tests using JUnit 5. This project was created with the aim of deepening knowledge and providing practical experience in building secure applications with Spring Boot.
