@@ -1,0 +1,558 @@
+openapi: 3.0.1
+info:
+  title: OpenApi specification
+  description: OpenApi documentation
+  contact:
+    name: Diego
+    url: https://portfolio-diegobp.netlify.app
+    email: diegobpdev@gmail.com
+  version: '1.0'
+servers:
+  - url: http://localhost:8080
+    description: Local ENV
+security:
+  - bearerAuth: []
+paths:
+  /posts:
+    get:
+      tags:
+        - Posts
+      operationId: findAll
+      parameters:
+        - name: pageNo
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 5
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            type: string
+            default: title
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PagePost'
+    post:
+      tags:
+        - Posts
+      operationId: createPost
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDTO'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Post'
+  /posts/{id}/upvote:
+    post:
+      tags:
+        - Posts
+      operationId: increaseUpvote
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /comments:
+    get:
+      tags:
+        - Comments
+      operationId: findAll_1
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+    post:
+      tags:
+        - Comments
+      operationId: createComment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentDTO'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Comment'
+  /comments/{id}/upvote:
+    post:
+      tags:
+        - Comments
+      operationId: increaseUpvote_1
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /auth/reset-password:
+    post:
+      tags:
+        - Authentication
+      operationId: resetPassword
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDTO'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDTO'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      operationId: forgotPassword
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /auth/change-password:
+    post:
+      tags:
+        - Authentication
+      operationId: changePassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordDTO'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /posts/{id}:
+    get:
+      tags:
+        - Posts
+      summary: Get a single post
+      description: This endpoint returns a single post document
+      operationId: findById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          description: Not found
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Post'
+    delete:
+      tags:
+        - Posts
+      operationId: delete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Post'
+    patch:
+      tags:
+        - Posts
+      operationId: update
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Post'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Post'
+  /comments/{id}:
+    get:
+      tags:
+        - Comments
+      operationId: findById_1
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Comment'
+    delete:
+      tags:
+        - Comments
+      operationId: delete_1
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Comment'
+    patch:
+      tags:
+        - Comments
+      operationId: update_1
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/Comment'
+  /auth/confirm-account:
+    get:
+      tags:
+        - Authentication
+      operationId: confirmUserAccount
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+components:
+  schemas:
+    PostDTO:
+      required:
+        - categories
+        - content
+        - title
+      type: object
+      properties:
+        title:
+          maxLength: 100
+          minLength: 5
+          type: string
+        content:
+          maxLength: 1000
+          minLength: 30
+          type: string
+        categories:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+            enum:
+              - technology
+              - sports
+              - travel
+              - food_and_recipes
+              - fashion_and_style
+              - health_and_fitness
+              - arts_and_culture
+              - personal_development
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        publishDate:
+          type: string
+          format: date-time
+        upvotes:
+          type: integer
+          format: int32
+        categories:
+          uniqueItems: true
+          type: array
+          items:
+            type: string
+            enum:
+              - technology
+              - sports
+              - travel
+              - food_and_recipes
+              - fashion_and_style
+              - health_and_fitness
+              - arts_and_culture
+              - personal_development
+    CommentDTO:
+      required:
+        - content
+        - postId
+      type: object
+      properties:
+        content:
+          maxLength: 150
+          minLength: 5
+          type: string
+        postId:
+          type: string
+          format: uuid
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        publishDate:
+          type: string
+          format: date-time
+        upvotes:
+          type: integer
+          format: int32
+    RegisterDTO:
+      required:
+        - email
+        - password
+        - username
+      type: object
+      properties:
+        username:
+          maxLength: 20
+          minLength: 3
+          type: string
+        password:
+          maxLength: 30
+          minLength: 4
+          type: string
+        email:
+          type: string
+    LoginDTO:
+      required:
+        - password
+        - username
+      type: object
+      properties:
+        username:
+          maxLength: 20
+          minLength: 3
+          type: string
+        password:
+          maxLength: 30
+          minLength: 4
+          type: string
+    ChangePasswordDTO:
+      required:
+        - newPassword
+        - oldPassword
+      type: object
+      properties:
+        oldPassword:
+          maxLength: 30
+          minLength: 4
+          type: string
+        newPassword:
+          maxLength: 30
+          minLength: 4
+          type: string
+    PagePost:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        first:
+          type: boolean
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+          format: int32
+        pageable:
+          $ref: '#/components/schemas/PageableObject'
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        offset:
+          type: integer
+          format: int64
+        sort:
+          $ref: '#/components/schemas/SortObject'
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+        pageSize:
+          type: integer
+          format: int32
+        pageNumber:
+          type: integer
+          format: int32
+    SortObject:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        unsorted:
+          type: boolean
+        sorted:
+          type: boolean
+  securitySchemes:
+    bearerAuth:
+      type: http
+      description: JWT auth description
+      scheme: bearer
+      bearerFormat: JWT
