@@ -37,10 +37,12 @@ class PostServiceTest extends ApplicationConfigTest {
     Post POST_RECORD = new Post(POST_DTO_RECORD.getTitle(), POST_DTO_RECORD.getContent(), Instant.now(), CATEGORIES_RECORD, USER_RECORD);
     Post POST_RECORD_2 = new Post("z", POST_DTO_RECORD.getContent(), Instant.now().plusSeconds(1), CATEGORIES_RECORD, USER_RECORD);
     List<Post> POST_LIST_RECORD = Arrays.asList(POST_RECORD, POST_RECORD_2);
-    Page<Post> POSTS_RECORD = new PageImpl<>(POST_LIST_RECORD, PAGING_RECORD, 1);
     Pageable PAGING_RECORD = PageRequest.of(0, 5, Sort.by("title"));
+    Page<Post> POSTS_RECORD = new PageImpl<>(POST_LIST_RECORD, PAGING_RECORD, 1);
+
     @MockBean
     private PostRepository postRepository;
+
     private Authentication authentication;
     private SecurityContext securityContext;
 

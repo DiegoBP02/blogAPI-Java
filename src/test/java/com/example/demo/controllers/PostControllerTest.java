@@ -38,10 +38,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PostControllerTest extends ApplicationConfigTest {
 
     private static final String PATH = "/posts";
-    Set<PostCategory> CATEGORIES_RECORD = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
-    PostDTO POSTDTO_RECORD = new PostDTO("title", "contentmusthaveatleast30characters", CATEGORIES_RECORD);
-    Post POST_RECORD = new Post(POSTDTO_RECORD.getTitle(), POSTDTO_RECORD.getContent(), Instant.now(), CATEGORIES_RECORD, USER_RECORD);
     User USER_RECORD = new User("a", "b", "c", Role.ROLE_USER);
+    Set<PostCategory> CATEGORIES_RECORD = new HashSet<>(Collections.singleton(PostCategory.valueOf(1)));
+    PostDTO POST_DTO_RECORD = new PostDTO("title", "contentmusthaveatleast30characters", CATEGORIES_RECORD);
+    Post POST_RECORD = new Post(POST_DTO_RECORD.getTitle(), POST_DTO_RECORD.getContent(), Instant.now(), CATEGORIES_RECORD, USER_RECORD);
     @MockBean
     private PostService postService;
     @Autowired
@@ -59,7 +59,7 @@ class PostControllerTest extends ApplicationConfigTest {
                 .post(PATH)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .content(this.objectMapper.writeValueAsString(POSTDTO_RECORD));
+                .content(this.objectMapper.writeValueAsString(POST_DTO_RECORD));
 
         mockMvc.perform(mockRequest)
                 .andExpect(status().isCreated())

@@ -32,7 +32,7 @@ public class CommentController {
         return ResponseEntity.created(uri).body(result);
     }
 
-    @RequestMapping(method = RequestMethod.GET)
+    @GetMapping
     public ResponseEntity<List<Comment>> findAll() {
         return ResponseEntity.ok().body(commentService.findAll());
     }
@@ -42,7 +42,7 @@ public class CommentController {
         return ResponseEntity.ok().body(commentService.findById(id));
     }
 
-    @RequestMapping(method = RequestMethod.PATCH, value = "/{id}")
+    @PatchMapping(value = "/{id}")
     public ResponseEntity<Comment> update(@PathVariable UUID id, @RequestBody Comment obj) {
         return ResponseEntity.ok().body(commentService.update(id, obj));
     }
