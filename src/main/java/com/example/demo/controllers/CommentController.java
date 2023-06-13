@@ -3,6 +3,7 @@ package com.example.demo.controllers;
 import com.example.demo.dtos.CommentDTO;
 import com.example.demo.entities.Comment;
 import com.example.demo.services.CommentService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/comments")
+@Tag(name = "Comments")
 public class CommentController {
 
     @Autowired

@@ -41,6 +41,12 @@ public class Configurations {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/auth/confirm-account")
                 .permitAll()
+                .requestMatchers(
+                        "/v3/api-docs",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**"
+                )
+                .permitAll()
                 .anyRequest().authenticated()
                 .and().addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling()

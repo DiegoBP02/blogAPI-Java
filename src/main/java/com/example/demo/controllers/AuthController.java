@@ -10,6 +10,7 @@ import com.example.demo.services.AuthenticationService;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/auth")
+@Tag(name = "Authentication")
 public class AuthController {
 
     private final Bucket bucket;

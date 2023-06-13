@@ -3,6 +3,9 @@ package com.example.demo.controllers;
 import com.example.demo.dtos.PostDTO;
 import com.example.demo.entities.Post;
 import com.example.demo.services.PostService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,6 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/posts")
+@Tag(name = "Posts")
 public class PostController {
 
     @Autowired
@@ -42,6 +46,19 @@ public class PostController {
         return ResponseEntity.ok().body(posts);
     }
 
+    @Operation(
+            description = "This endpoint returns a single post document",
+            summary = "Get a single post",
+            responses = {
+                    @ApiResponse(
+                            description = "Success",
+                            responseCode = "200"
+                    ),@ApiResponse(
+                            description = "Not found",
+                            responseCode = "404"
+                    ),
+            }
+    )
     @GetMapping(value = "/{id}")
     public ResponseEntity<Post> findById(@PathVariable UUID id) {
         return ResponseEntity.ok().body(postService.findById(id));
