@@ -51,13 +51,13 @@ spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 ```
 3. Replace the placeholders with your actual database and email configuration details. Here's a description of each placeholder:
-your-db-host: The host or IP address of your PostgreSQL database.
-your-db-port: The port number of your PostgreSQL database.
-your-db-name: The name of your PostgreSQL database.
-your-db-username: The username for accessing your PostgreSQL database.
-your-db-password: The password for accessing your PostgreSQL database.
-your-email: Your email address.
-your-password: Your email account password.
+    1. your-db-host: The host or IP address of your PostgreSQL database.
+    2. your-db-port: The port number of your PostgreSQL database.
+    3. your-db-name: The name of your PostgreSQL database.
+    4. your-db-username: The username for accessing your PostgreSQL database.
+    5. your-db-password: The password for accessing your PostgreSQL database.
+    6. your-email: Your email address.
+    7. your-password: Your email account password.
 
 4. After successfully running the application, you should see log messages indicating the startup of the application. The logs will display the port on which the application is running.
 
@@ -69,3 +69,5 @@ To protect your credentials:
 - Avoid committing the `application.properties` file to public repositories or sharing it with others.
 - Double-check that you have replaced the placeholder values with your actual database and email configuration details.
 - Keep your `application.properties` file secure and confidential.
+
+Stay vigilant and protect your data!
